@@ -48,6 +48,48 @@
           "src/main/resources/data/sanitycraft/painting_variant/sanity_paint.json"
         ]
       }
+    },
+    {
+      "name": "BloodyCreeper",
+      "type": "livingentity",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "bloody_creeper",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/sanitycraft/models/item/bloody_creeper_spawn_egg.json",
+          "src/main/java/net/nekuzaky/sanitycraft/entity/BloodyCreeperEntity.java",
+          "src/main/java/net/nekuzaky/sanitycraft/client/renderer/BloodyCreeperRenderer.java",
+          "src/main/resources/assets/sanitycraft/items/bloody_creeper_spawn_egg.json"
+        ]
+      }
+    },
+    {
+      "name": "Blood",
+      "type": "particle",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "blood",
+      "metadata": {
+        "files": [
+          "src/main/java/net/nekuzaky/sanitycraft/client/particle/BloodParticle.java",
+          "src/main/resources/assets/sanitycraft/particles/blood.json"
+        ]
+      }
+    },
+    {
+      "name": "Pill",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pill",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/sanitycraft/items/pill.json",
+          "src/main/resources/assets/sanitycraft/models/item/pill.json",
+          "src/main/java/net/nekuzaky/sanitycraft/item/PillItem.java"
+        ]
+      }
     }
   ],
   "variable_elements": [],
@@ -58,14 +100,19 @@
     "en_us": {
       "item.sanitycraft.stalker_spawn_egg": "Stalker Spawn Egg",
       "entity.sanitycraft.stalker": "Stalker",
-      "item_group.sanitycraft.sanity_craft": "Sanity Craft",
+      "item_group.sanitycraft.sanity_craft": "SanityCraft",
       "painting.sanitycraft.sanity_paint.author": "Nekuzaky",
-      "painting.sanitycraft.sanity_paint.title": "Sanity Paint"
+      "painting.sanitycraft.sanity_paint.title": "Sanity Paint",
+      "entity.sanitycraft.bloody_creeper": "Bloody Creeper",
+      "item.sanitycraft.bloody_creeper_spawn_egg": "Bloody Creeper Spawn Egg",
+      "item.sanitycraft.pill": "Pill"
     }
   },
   "metadata": {
     "files": [
       "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModCommands.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModParticles.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModParticleTypes.java",
       "src/main/resources/data/minecraft/tags/painting_variant/placeable.json",
       "src/main/java/net/nekuzaky/sanitycraft/mixin/RepairItemRecipeMixin.java",
       "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModItems.java",

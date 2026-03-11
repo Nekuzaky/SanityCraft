@@ -14,6 +14,7 @@ public class PlayerSanityComponent {
 	private int hallucinationCooldown = 0;
 	private int ghostCooldown = 0;
 	private int whisperCooldown = 0;
+	private int jumpscareCooldown = 0;
 
 	public int getSanity() {
 		return sanity;
@@ -47,6 +48,9 @@ public class PlayerSanityComponent {
 		if (whisperCooldown > 0) {
 			whisperCooldown--;
 		}
+		if (jumpscareCooldown > 0) {
+			jumpscareCooldown--;
+		}
 	}
 
 	public boolean canPlayStrangeSound() {
@@ -79,5 +83,13 @@ public class PlayerSanityComponent {
 
 	public void resetWhisperCooldown(RandomSource random) {
 		whisperCooldown = random.nextIntBetweenInclusive(40, 120);
+	}
+
+	public boolean canJumpscare() {
+		return jumpscareCooldown <= 0;
+	}
+
+	public void resetJumpscareCooldown(RandomSource random) {
+		jumpscareCooldown = random.nextIntBetweenInclusive(600, 1600);
 	}
 }

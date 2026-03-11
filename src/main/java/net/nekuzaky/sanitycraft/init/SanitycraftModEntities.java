@@ -4,6 +4,7 @@
 package net.nekuzaky.sanitycraft.init;
 
 import net.nekuzaky.sanitycraft.entity.StalkerEntity;
+import net.nekuzaky.sanitycraft.entity.BloodyCreeperEntity;
 import net.nekuzaky.sanitycraft.SanitycraftMod;
 
 import net.minecraft.world.entity.MobCategory;
@@ -19,11 +20,15 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRe
 
 public class SanitycraftModEntities {
 	public static EntityType<StalkerEntity> STALKER;
+	public static EntityType<BloodyCreeperEntity> BLOODY_CREEPER;
 
 	public static void load() {
 		STALKER = register("stalker", EntityType.Builder.<StalkerEntity>of(StalkerEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3)
 
 				.ridingOffset(-0.6f).sized(0.6f, 1.8f));
+		BLOODY_CREEPER = register("bloody_creeper", EntityType.Builder.<BloodyCreeperEntity>of(BloodyCreeperEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3)
+
+				.sized(0.6f, 1.7f));
 		init();
 		registerAttributes();
 	}
@@ -41,5 +46,6 @@ public class SanitycraftModEntities {
 
 	public static void registerAttributes() {
 		FabricDefaultAttributeRegistry.register(STALKER, StalkerEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(BLOODY_CREEPER, BloodyCreeperEntity.createAttributes());
 	}
 }

@@ -1,7 +1,10 @@
 {
   "item.sanitycraft.stalker_spawn_egg": "Stalker Spawn Egg",
   "entity.sanitycraft.stalker": "Stalker",
-  "item_group.sanitycraft.sanity_craft": "Sanity Craft",
+  "item_group.sanitycraft.sanity_craft": "SanityCraft",
   "painting.sanitycraft.sanity_paint.author": "Nekuzaky",
-  "painting.sanitycraft.sanity_paint.title": "Sanity Paint"
+  "painting.sanitycraft.sanity_paint.title": "Sanity Paint",
+  "entity.sanitycraft.bloody_creeper": "Bloody Creeper",
+  "item.sanitycraft.bloody_creeper_spawn_egg": "Bloody Creeper Spawn Egg",
+  "item.sanitycraft.pill": "Pill"
 }

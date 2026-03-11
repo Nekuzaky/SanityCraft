@@ -12,6 +12,6 @@ public class YeyCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
 		dispatcher.register(Commands.literal("yey")
 
-				.then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("message", StringArgumentType.string()))));
+				.then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("YEY", StringArgumentType.string()))));
 	}
 }

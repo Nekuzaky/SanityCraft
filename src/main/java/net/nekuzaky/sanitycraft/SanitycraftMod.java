@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 import net.nekuzaky.sanitycraft.init.SanitycraftModTabs;
+import net.nekuzaky.sanitycraft.init.SanitycraftModParticleTypes;
 import net.nekuzaky.sanitycraft.init.SanitycraftModItems;
 import net.nekuzaky.sanitycraft.init.SanitycraftModEntities;
 import net.nekuzaky.sanitycraft.init.SanitycraftModCommands;
@@ -37,6 +38,7 @@ public class SanitycraftMod implements ModInitializer {
 		// End of user code block mod constructor
 		LOGGER.info("Initializing SanitycraftMod");
 		SanitycraftModTabs.load();
+		SanitycraftModParticleTypes.load();
 		SanitycraftModEntities.load();
 		SanitycraftModItems.load();
 		SanitycraftModCommands.load();
@@ -45,6 +47,8 @@ public class SanitycraftMod implements ModInitializer {
 		net.nekuzaky.sanitycraft.sanity.SanityNetworking.initialize();
 		net.nekuzaky.sanitycraft.sanity.SanityManager.initialize();
 		net.nekuzaky.sanitycraft.sanity.SanityEvents.register();
+		net.nekuzaky.sanitycraft.sanity.SanityDebugCommands.register();
+		net.nekuzaky.sanitycraft.sanity.PillSanityHandler.register();
 		// End of user code block mod init
 	}
 

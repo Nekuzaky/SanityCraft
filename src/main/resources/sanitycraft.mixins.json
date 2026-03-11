@@ -14,11 +14,7 @@
     "CommandsMixin",
     "ExperienceOrbMixin"
   ],
-  "client": [
-    "MinecraftTitleMixin",
-    "AbstractContainerScreenAccessor",
-    "AbstractContainerScreenMixin"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   },

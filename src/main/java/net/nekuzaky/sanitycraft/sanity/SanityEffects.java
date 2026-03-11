@@ -1,15 +1,18 @@
 package net.nekuzaky.sanitycraft.sanity;
 
 import net.nekuzaky.sanitycraft.SanitycraftMod;
+import net.nekuzaky.sanitycraft.entity.BloodyCreeperEntity;
 import net.nekuzaky.sanitycraft.entity.StalkerEntity;
 import net.nekuzaky.sanitycraft.init.SanitycraftModEntities;
+import net.nekuzaky.sanitycraft.init.SanitycraftModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -23,15 +26,18 @@ public class SanityEffects {
 		int sanity = component.getSanity();
 		RandomSource random = player.getRandom();
 		ServerLevel level = player.level();
+		SanityStage stage = SanityStageResolver.resolve(sanity);
 
-		if (sanity <= 60 && sanity > 40) {
+		if (stage == SanityStage.UNEASY) {
 			player.addEffect(new MobEffectInstance(MobEffects.NAUSEA, 120, 0, true, false, false));
-		} else if (sanity > 60 && player.hasEffect(MobEffects.NAUSEA)) {
-			player.removeEffect(MobEffects.NAUSEA);
+		} else if (stage == SanityStage.STABLE || stage == SanityStage.MILD_DISCOMFORT) {
+			if (player.hasEffect(MobEffects.NAUSEA)) {
+				player.removeEffect(MobEffects.NAUSEA);
+			}
 		}
 
-		if (sanity <= 80 && sanity > 60 && component.canPlayStrangeSound()) {
-			player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 0.45F, 0.8F + random.nextFloat() * 0.4F);
+		if (stage == SanityStage.MILD_DISCOMFORT && component.canPlayStrangeSound()) {
+			HallucinationSoundManager.playStageSound(player, stage, random);
 			component.resetStrangeSoundCooldown(random);
 		}
 
@@ -39,36 +45,26 @@ public class SanityEffects {
 			return;
 		}
 
-		if (sanity <= 40 && sanity > 20 && component.canPlayHallucination()) {
-			playHallucinationSound(player, random);
+		if (stage == SanityStage.UNSTABLE && component.canPlayHallucination()) {
+			HallucinationSoundManager.playStageSound(player, stage, random);
 			spawnShadowHallucination(level, player, random);
 			sendWhisper(player, component, random, sanity);
 			component.resetHallucinationCooldown(random);
 		}
 
-		if (sanity <= 20 && component.canSpawnGhost()) {
+		if (stage == SanityStage.SEVERE_BREAKDOWN && component.canSpawnGhost()) {
+			HallucinationSoundManager.playStageSound(player, stage, random);
+			spawnBloodHallucination(level, player, random);
 			spawnGhostApparition(level, player, random);
 			spawnStalkerHallucination(level, player, random, config);
+			spawnBloodyCreeperHallucination(level, player, random, config);
 			player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0, true, false, false));
 			sendWhisper(player, component, random, sanity);
 			component.resetGhostCooldown(random);
 		}
 
-		if (sanity <= 60 && sanity > 40 && component.canWhisper() && random.nextFloat() < 0.22F) {
+		if (stage == SanityStage.UNEASY && component.canWhisper() && random.nextFloat() < clamp01(config.uneasyWhisperChance)) {
 			sendWhisper(player, component, random, sanity);
-		}
-	}
-
-	private static void playHallucinationSound(ServerPlayer player, RandomSource random) {
-		int roll = random.nextInt(4);
-		if (roll == 0) {
-			player.playNotifySound(SoundEvents.ENDERMAN_STARE, SoundSource.HOSTILE, 0.7F, 0.8F + random.nextFloat() * 0.3F);
-		} else if (roll == 1) {
-			player.playNotifySound(SoundEvents.PHANTOM_AMBIENT, SoundSource.HOSTILE, 0.7F, 0.75F + random.nextFloat() * 0.2F);
-		} else if (roll == 2) {
-			player.playNotifySound(SoundEvents.CREEPER_PRIMED, SoundSource.HOSTILE, 0.8F, 0.9F + random.nextFloat() * 0.2F);
-		} else {
-			player.playNotifySound(SoundEvents.WARDEN_NEARBY_CLOSER, SoundSource.HOSTILE, 0.8F, 0.9F + random.nextFloat() * 0.2F);
 		}
 	}
 
@@ -83,7 +79,6 @@ public class SanityEffects {
 		level.sendParticles(player, ParticleTypes.SOUL, true, false, base.getX() + 0.5D, base.getY() + 0.4D, base.getZ() + 0.5D, 28, 0.6D, 1.2D, 0.6D, 0.02D);
 		level.sendParticles(player, ParticleTypes.SCULK_SOUL, true, false, base.getX() + 0.5D, base.getY() + 1.0D, base.getZ() + 0.5D, 18, 0.45D, 1.4D, 0.45D, 0.02D);
 		level.sendParticles(player, ParticleTypes.SOUL_FIRE_FLAME, true, false, base.getX() + 0.5D, base.getY() + 0.8D, base.getZ() + 0.5D, 10, 0.35D, 0.9D, 0.35D, 0.005D);
-		player.playNotifySound(SoundEvents.WARDEN_NEARBY_CLOSEST, SoundSource.HOSTILE, 0.8F, 0.7F + random.nextFloat() * 0.2F);
 	}
 
 	private static void spawnStalkerHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
@@ -105,15 +100,55 @@ public class SanityEffects {
 
 		stalker.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
 		stalker.setTarget(player);
-		stalker.addTag("sanitycraft_hallucination");
 		level.addFreshEntity(stalker);
-		player.playNotifySound(SoundEvents.ENDERMAN_AMBIENT, SoundSource.HOSTILE, 0.8F, 0.7F + random.nextFloat() * 0.3F);
+		SanityStalkerHuntDirector.attach(player, stalker, config.stalkerLifetimeSeconds);
+	}
 
-		SanitycraftMod.queueServerWork(Math.max(1, config.stalkerLifetimeSeconds) * 20, () -> {
-			if (stalker.isAlive()) {
-				stalker.discard();
+	private static void spawnBloodyCreeperHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
+		if (!config.bloodyCreeperHallucinationEnabled) {
+			return;
+		}
+		if (random.nextInt(100) >= Math.max(0, Math.min(100, config.bloodyCreeperSpawnChancePercent))) {
+			return;
+		}
+		if (!level.getEntitiesOfClass(BloodyCreeperEntity.class, player.getBoundingBox().inflate(26.0D), entity -> entity.isAlive() && entity.getTags().contains("sanitycraft_hallucination_creeper"))
+				.isEmpty()) {
+			return;
+		}
+
+		BlockPos pos = randomNearby(player, random, 7.0D, 15.0D);
+		BloodyCreeperEntity creeper = SanitycraftModEntities.BLOODY_CREEPER.create(level, EntitySpawnReason.EVENT);
+		if (creeper == null) {
+			return;
+		}
+
+		creeper.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+		creeper.setTarget(player);
+		creeper.addTag("sanitycraft_hallucination_creeper");
+		level.addFreshEntity(creeper);
+
+		SanitycraftMod.queueServerWork(Math.max(1, config.bloodyCreeperLifetimeSeconds) * 20, () -> {
+			if (creeper.isAlive()) {
+				creeper.discard();
 			}
 		});
+	}
+
+	private static void spawnBloodHallucination(ServerLevel level, ServerPlayer player, RandomSource random) {
+		BlockPos base = randomNearby(player, random, 4.0D, 8.0D);
+		SimpleParticleType blood = SanitycraftModParticleTypes.BLOOD;
+		if (blood == null) {
+			try {
+				Object raw = BuiltInRegistries.PARTICLE_TYPE.getValue(ResourceLocation.fromNamespaceAndPath(SanitycraftMod.MODID, "blood"));
+				if (raw instanceof SimpleParticleType simple) {
+					blood = simple;
+				}
+			} catch (Exception ignored) {
+			}
+		}
+		if (blood != null) {
+			level.sendParticles(player, blood, true, false, base.getX() + 0.5D, base.getY() + 0.7D, base.getZ() + 0.5D, 18, 0.35D, 0.35D, 0.35D, 0.01D);
+		}
 	}
 
 	private static BlockPos randomNearby(ServerPlayer player, RandomSource random, double minDistance, double maxDistance) {
@@ -135,5 +170,12 @@ public class SanityEffects {
 		String text = whispers[random.nextInt(whispers.length)];
 		player.displayClientMessage(Component.literal(text), true);
 		component.resetWhisperCooldown(random);
+	}
+
+	private static float clamp01(float value) {
+		if (value < 0.0F) {
+			return 0.0F;
+		}
+		return Math.min(1.0F, value);
 	}
 }
