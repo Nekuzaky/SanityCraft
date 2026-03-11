@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+out/
+*.lock
+
+# Runtime data
+run/
+
+# MCreator local/cache files
+.mcreator/generatorGradleCache
+.mcreator/modElementThumbnails/
+.mcreator/setupInfo
+.mcreator/workspaceBackups/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+Thumbs.db
+.DS_Store

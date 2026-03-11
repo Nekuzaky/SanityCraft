@@ -1,11 +1,97 @@
 {
-  "mod_elements": [],
+  "mod_elements": [
+    {
+      "name": "Yey",
+      "type": "command",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "yey",
+      "metadata": {
+        "files": [
+          "src/main/java/net/nekuzaky/sanitycraft/command/YeyCommand.java"
+        ]
+      }
+    },
+    {
+      "name": "Stalker",
+      "type": "livingentity",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "stalker",
+      "metadata": {
+        "files": [
+          "src/main/java/net/nekuzaky/sanitycraft/client/renderer/StalkerRenderer.java",
+          "src/main/java/net/nekuzaky/sanitycraft/entity/StalkerEntity.java",
+          "src/main/resources/assets/sanitycraft/items/stalker_spawn_egg.json",
+          "src/main/resources/assets/sanitycraft/models/item/stalker_spawn_egg.json"
+        ]
+      }
+    },
+    {
+      "name": "SanityCraft",
+      "type": "tab",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "sanity_craft",
+      "metadata": {
+        "files": []
+      }
+    },
+    {
+      "name": "SanityPaint",
+      "type": "painting",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "sanity_paint",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/sanitycraft/painting_variant/sanity_paint.json"
+        ]
+      }
+    }
+  ],
   "variable_elements": [],
   "sound_elements": [],
   "tag_elements": {},
   "tab_element_order": {},
   "language_map": {
-    "en_us": {}
+    "en_us": {
+      "item.sanitycraft.stalker_spawn_egg": "Stalker Spawn Egg",
+      "entity.sanitycraft.stalker": "Stalker",
+      "item_group.sanitycraft.sanity_craft": "Sanity Craft",
+      "painting.sanitycraft.sanity_paint.author": "Nekuzaky",
+      "painting.sanitycraft.sanity_paint.title": "Sanity Paint"
+    }
+  },
+  "metadata": {
+    "files": [
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModCommands.java",
+      "src/main/resources/data/minecraft/tags/painting_variant/placeable.json",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/RepairItemRecipeMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModItems.java",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/ServerPlayerMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModEntityRenderers.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModEntities.java",
+      "src/main/java/net/nekuzaky/sanitycraft/SanitycraftMod.java",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/BoneMealItemMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/event/ItemEvents.java",
+      "src/main/java/net/nekuzaky/sanitycraft/init/SanitycraftModTabs.java",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/LivingEntityMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/event/LivingEntityEvents.java",
+      "src/main/java/net/nekuzaky/sanitycraft/event/PlayerEvents.java",
+      "src/main/java/net/nekuzaky/sanitycraft/SanitycraftModClient.java",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/ItemStackMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/ExperienceOrbMixin.java",
+      "src/main/resources/pack.mcmeta",
+      "src/main/resources/META-INF/sanitycraft.accesswidener",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/PlayerMixin.java",
+      "src/main/resources/fabric.mod.json",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/CommandsMixin.java",
+      "src/main/java/net/nekuzaky/sanitycraft/event/MiscEvents.java",
+      "src/main/java/net/nekuzaky/sanitycraft/event/BlockEvents.java",
+      "src/main/resources/sanitycraft.mixins.json",
+      "src/main/java/net/nekuzaky/sanitycraft/mixin/BlockItemMixin.java"
+    ]
   },
   "foldersRoot": {
     "name": "~",
@@ -14,17 +100,20 @@
   "workspaceSettings": {
     "modid": "sanitycraft",
     "modName": "SanityCraft",
-    "version": "1.0.0",
-    "author": "MCreator",
-    "websiteURL": "https://mcreator.net",
-    "license": "Not specified",
+    "version": "0.1.0",
+    "description": "SanityCraft adds a psychological survival system to Minecraft.  Players have a sanity level that decreases in darkness, caves, storms and near hostile mobs.  Low sanity causes hallucinations, strange sounds and paranormal events.  Survive the world… or your own mind.",
+    "author": "Nekuzaky",
+    "websiteURL": "https://github.com/Nekuzaky/SanityCraft",
+    "license": "MIT License",
     "serverSideOnly": false,
+    "modPicture": "logo",
     "requiredMods": [],
     "dependencies": [],
     "dependants": [],
     "mcreatorDependencies": [],
     "currentGenerator": "fabric-1.21.8",
-    "modElementsPackage": "net.mcreator.sanitycraft"
+    "credits": "Developed by Nekuzaky.",
+    "modElementsPackage": "net.nekuzaky.sanitycraft"
   },
   "mcreatorVersion": 202500345720
 }

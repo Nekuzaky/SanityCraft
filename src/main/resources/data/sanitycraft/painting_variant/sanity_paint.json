@@ -1,0 +1,11 @@
+{
+  "asset_id": "sanitycraft:sanity_paint",
+  "height": 4,
+  "width": 4,
+  "title": {
+    "translate": "painting.sanitycraft.sanity_paint.title"
+  },
+  "author": {
+    "translate": "painting.sanitycraft.sanity_paint.author"
+  }
+}

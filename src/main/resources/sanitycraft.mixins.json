@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "package": "net.nekuzaky.sanitycraft.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "sanitycraft.refmap.json",
+  "mixins": [
+    "RepairItemRecipeMixin",
+    "ServerPlayerMixin",
+    "LivingEntityMixin",
+    "PlayerMixin",
+    "ItemStackMixin",
+    "BlockItemMixin",
+    "BoneMealItemMixin",
+    "CommandsMixin",
+    "ExperienceOrbMixin"
+  ],
+  "client": [
+    "MinecraftTitleMixin",
+    "AbstractContainerScreenAccessor",
+    "AbstractContainerScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8.4"
+}

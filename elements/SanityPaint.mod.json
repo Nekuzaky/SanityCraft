@@ -1,0 +1,11 @@
+{
+  "_fv": 79,
+  "_type": "painting",
+  "definition": {
+    "texture": "logo",
+    "width": 64,
+    "height": 64,
+    "title": "Sanity Paint",
+    "author": "Nekuzaky"
+  }
+}
