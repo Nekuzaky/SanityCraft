@@ -16,6 +16,10 @@ loom {
         accessWidenerPath = file("src/main/resources/META-INF/sanitycraft.accesswidener")
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:1.21.8"
     mappings loom.officialMojangMappings()

@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftTitleMixin {
-	@Inject(method = "createTitle", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "createTitle", at = @At("RETURN"), cancellable = true, require = 0)
 	private void sanitycraft$appendWindowTitle(CallbackInfoReturnable<String> cir) {
 		cir.setReturnValue(cir.getReturnValue() + " | SanityCraft");
 	}

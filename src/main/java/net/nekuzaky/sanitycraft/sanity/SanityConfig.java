@@ -64,6 +64,8 @@ public class SanityConfig {
 
 	public boolean hallucinationsEnabled = true;
 	public boolean narrativeEventsEnabled = true;
+	public boolean discordPresenceEnabled = true;
+	public String discordApplicationId = "1481286526951358486";
 	public boolean streamerSafeMode = false;
 	public boolean falseUiEventsEnabled = true;
 	public float falseUiEventChance = 0.05F;
@@ -118,7 +120,7 @@ public class SanityConfig {
 
 		try {
 			String json = Files.readString(CONFIG_PATH);
-			JsonObject object = JsonParser.parseString(json).getAsJsonObject();
+			JsonObject object = new JsonParser().parse(json).getAsJsonObject();
 			config.updateIntervalSeconds = readInt(object, "updateIntervalSeconds", config.updateIntervalSeconds);
 			config.sanityOnRespawnAfterDeath = readInt(object, "sanityOnRespawnAfterDeath", config.sanityOnRespawnAfterDeath);
 			config.darknessLoss = readInt(object, "darknessLoss", config.darknessLoss);
@@ -165,6 +167,8 @@ public class SanityConfig {
 			config.caveMiningMaxIntervalTicks = readInt(object, "caveMiningMaxIntervalTicks", config.caveMiningMaxIntervalTicks);
 			config.hallucinationsEnabled = readBoolean(object, "hallucinationsEnabled", config.hallucinationsEnabled);
 			config.narrativeEventsEnabled = readBoolean(object, "narrativeEventsEnabled", config.narrativeEventsEnabled);
+			config.discordPresenceEnabled = readBoolean(object, "discordPresenceEnabled", config.discordPresenceEnabled);
+			config.discordApplicationId = readString(object, "discordApplicationId", config.discordApplicationId);
 			config.streamerSafeMode = readBoolean(object, "streamerSafeMode", config.streamerSafeMode);
 			config.falseUiEventsEnabled = readBoolean(object, "falseUiEventsEnabled", config.falseUiEventsEnabled);
 			config.falseUiEventChance = readFloat(object, "falseUiEventChance", config.falseUiEventChance);
@@ -276,6 +280,8 @@ public class SanityConfig {
 		object.addProperty("caveMiningMaxIntervalTicks", caveMiningMaxIntervalTicks);
 		object.addProperty("hallucinationsEnabled", hallucinationsEnabled);
 		object.addProperty("narrativeEventsEnabled", narrativeEventsEnabled);
+		object.addProperty("discordPresenceEnabled", discordPresenceEnabled);
+		object.addProperty("discordApplicationId", discordApplicationId);
 		object.addProperty("streamerSafeMode", streamerSafeMode);
 		object.addProperty("falseUiEventsEnabled", falseUiEventsEnabled);
 		object.addProperty("falseUiEventChance", falseUiEventChance);

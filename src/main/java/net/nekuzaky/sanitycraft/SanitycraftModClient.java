@@ -24,6 +24,8 @@ public class SanitycraftModClient implements ClientModInitializer {
 				(payload, context) -> context.client().execute(() -> net.nekuzaky.sanitycraft.client.SanityClientState.triggerScarePulse(payload.durationTicks(), payload.intensity())));
 		net.nekuzaky.sanitycraft.client.SanityHudRenderer.register();
 		net.nekuzaky.sanitycraft.client.HorrorAmbienceDirector.register();
+		net.nekuzaky.sanitycraft.client.MainMenuHorrorOverlay.register();
+		net.nekuzaky.sanitycraft.client.DiscordRichPresenceManager.register();
 		// End of user code block mod init
 	}
 	// Start of user code block mod methods

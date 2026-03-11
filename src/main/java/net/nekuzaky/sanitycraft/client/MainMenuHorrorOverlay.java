@@ -1,18 +1,44 @@
-package net.nekuzaky.sanitycraft.mixin;
+package net.nekuzaky.sanitycraft.client;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.TitleScreen;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(TitleScreen.class)
-public abstract class TitleScreenMixin {
-	@Inject(method = "render", at = @At("TAIL"), require = 0)
-	private void sanitycraft$renderHorrorMainMenu(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+public class MainMenuHorrorOverlay {
+	private static boolean registered = false;
+	private static final String WINDOW_TITLE = "SanityCraft";
+
+	private MainMenuHorrorOverlay() {
+	}
+
+	public static void register() {
+		if (registered) {
+			return;
+		}
+		registered = true;
+
+		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+			if (!(screen instanceof TitleScreen)) {
+				return;
+			}
+			ScreenEvents.afterRender(screen).register((current, guiGraphics, mouseX, mouseY, deltaTracker) -> renderOverlay(guiGraphics));
+		});
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			if (client.getWindow() == null || client.screen == null) {
+				return;
+			}
+			if (!(client.screen instanceof TitleScreen)) {
+				return;
+			}
+			client.getWindow().setTitle(WINDOW_TITLE);
+		});
+	}
+
+	private static void renderOverlay(GuiGraphics guiGraphics) {
 		int width = guiGraphics.guiWidth();
 		int height = guiGraphics.guiHeight();
 		long time = System.currentTimeMillis();
@@ -22,17 +48,13 @@ public abstract class TitleScreenMixin {
 		guiGraphics.fill(0, height - 24, width, height, (vignetteAlpha << 24) | 0x140000);
 		guiGraphics.fill(0, 0, 24, height, (vignetteAlpha << 24) | 0x140000);
 		guiGraphics.fill(width - 24, 0, width, height, (vignetteAlpha << 24) | 0x140000);
-
-		// Soft global darkening to push horror mood.
 		guiGraphics.fill(0, 0, width, height, 0x35000000);
 
-		// Glitch scanlines.
 		int scanAlpha = 18 + (int) ((Math.sin(time / 50.0D) + 1.0D) * 0.5D * 20.0D);
 		for (int y = 0; y < height; y += 4) {
 			guiGraphics.fill(0, y, width, y + 1, (scanAlpha << 24) | 0x101010);
 		}
 
-		// Occasional silhouette flash.
 		if ((time / 260L) % 9L == 0L) {
 			int cx = width / 2 + (int) (Math.sin(time / 90.0D) * 24.0D);
 			int top = height / 2 - 70;
@@ -46,7 +68,8 @@ public abstract class TitleScreenMixin {
 			guiGraphics.fill(cx + 3, top + 12, cx + 7, top + 15, 0xB08A0000);
 		}
 
-		Font font = Minecraft.getInstance().font;
+		Minecraft minecraft = Minecraft.getInstance();
+		Font font = minecraft.font;
 		int jitter = (int) (Math.sin(time / 110.0D) * 2.0D);
 		guiGraphics.drawString(font, "SANITYCRAFT", 18 + jitter, 18, 0xFFE2D2D2, true);
 		guiGraphics.drawString(font, "you are not alone", 18, 32, 0xFFB98080, false);

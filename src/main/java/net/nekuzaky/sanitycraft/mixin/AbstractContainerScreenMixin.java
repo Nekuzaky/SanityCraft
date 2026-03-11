@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenMixin {
-	@Inject(method = "render", at = @At("TAIL"))
+	@Inject(method = "render", at = @At("TAIL"), require = 0)
 	private void sanitycraft$renderGlobalContainerHorrorOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 		AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) (Object) this;
 		Font font = Minecraft.getInstance().font;

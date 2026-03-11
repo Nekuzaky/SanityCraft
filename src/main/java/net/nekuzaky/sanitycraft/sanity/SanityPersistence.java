@@ -36,7 +36,7 @@ public class SanityPersistence {
 		}
 		try {
 			String json = Files.readString(path);
-			JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+			JsonObject root = new JsonParser().parse(json).getAsJsonObject();
 			for (String key : root.keySet()) {
 				try {
 					UUID uuid = UUID.fromString(key);
