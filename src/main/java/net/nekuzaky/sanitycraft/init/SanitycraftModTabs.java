@@ -25,6 +25,7 @@ public class SanitycraftModTabs {
 		Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, TAB_SANITY_CRAFT,
 				FabricItemGroup.builder().title(Component.translatable("item_group.sanitycraft.sanity_craft")).icon(() -> new ItemStack(SanitycraftModItems.STALKER_SPAWN_EGG)).displayItems((parameters, tabData) -> {
 					tabData.accept(SanitycraftModItems.PILL);
+					tabData.accept(SanitycraftModItems.MENTALSHIELDTOTEM);
 				}).build());
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register(tabData -> {
 			tabData.accept(SanitycraftModItems.STALKER_SPAWN_EGG);

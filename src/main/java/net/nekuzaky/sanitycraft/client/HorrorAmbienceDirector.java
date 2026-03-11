@@ -64,6 +64,7 @@ public class HorrorAmbienceDirector {
 		}
 
 		float master = Mth.clamp(config.ambienceMasterVolume, 0.0F, 2.0F);
+		master *= Mth.clamp(config.accessibilityAudioIntensity, 0.0F, 2.0F);
 		float fear = Mth.clamp((100.0F - sanity) / 100.0F, 0.0F, 1.0F);
 		boolean cave = isCaveLike(player);
 		boolean night = isNight(player);

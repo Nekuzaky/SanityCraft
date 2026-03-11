@@ -90,6 +90,57 @@
           "src/main/java/net/nekuzaky/sanitycraft/item/PillItem.java"
         ]
       }
+    },
+    {
+      "name": "Mentalshieldtotem",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "mentalshieldtotem",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/sanitycraft/items/mentalshieldtotem.json",
+          "src/main/java/net/nekuzaky/sanitycraft/item/MentalshieldtotemItem.java",
+          "src/main/resources/assets/sanitycraft/models/item/mentalshieldtotem.json"
+        ]
+      }
+    },
+    {
+      "name": "MentalshieldtotemLitemAtilUnEffetLumineux",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "mentalshieldtotem_litem_atil_un_effet_lumineux",
+      "metadata": {
+        "dependencies": [],
+        "files": [
+          "src/main/java/net/nekuzaky/sanitycraft/procedures/MentalshieldtotemLitemAtilUnEffetLumineuxProcedure.java"
+        ]
+      }
+    },
+    {
+      "name": "Pillcraft",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pillcraft",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/sanitycraft/recipe/pillcraft.json"
+        ]
+      }
+    },
+    {
+      "name": "MentalShieldcraft",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "mental_shieldcraft",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/sanitycraft/recipe/mental_shieldcraft.json"
+        ]
+      }
     }
   ],
   "variable_elements": [],
@@ -105,7 +156,8 @@
       "painting.sanitycraft.sanity_paint.title": "Sanity Paint",
       "entity.sanitycraft.bloody_creeper": "Bloody Creeper",
       "item.sanitycraft.bloody_creeper_spawn_egg": "Bloody Creeper Spawn Egg",
-      "item.sanitycraft.pill": "Pill"
+      "item.sanitycraft.pill": "Pill",
+      "item.sanitycraft.mentalshieldtotem": "Mental shield "
     }
   },
   "metadata": {

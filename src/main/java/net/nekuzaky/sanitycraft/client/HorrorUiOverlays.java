@@ -5,6 +5,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LightLayer;
@@ -16,6 +18,7 @@ import net.nekuzaky.sanitycraft.sanity.SanityManager;
 public class HorrorUiOverlays {
 	private static long lastTorchScanMs = 0L;
 	private static float cachedTorchRepel = 0.0F;
+	private static long nextLootCorruptionMs = 0L;
 
 	private HorrorUiOverlays() {
 	}
@@ -27,13 +30,15 @@ public class HorrorUiOverlays {
 		if (fear <= 0 && !SanityClientState.hasScarePulse()) {
 			return;
 		}
+		SanityConfig config = SanityManager.getConfig();
+		float visual = clamp01(config.accessibilityVisualIntensity);
 		renderAmbientFog(guiGraphics, sanity, width, height);
 		renderHeartbeatPressure(guiGraphics, sanity, width, height);
 		renderScarePulseOverlay(guiGraphics, width, height);
 		renderNearMissSilhouette(guiGraphics, width, height);
 
-		int darknessAlpha = Math.min(90, fear);
-		int tintAlpha = Math.min(70, fear / 2);
+		int darknessAlpha = (int) (Math.min(90, fear) * visual);
+		int tintAlpha = (int) (Math.min(70, fear / 2) * visual);
 		guiGraphics.fill(0, 0, width, height, (darknessAlpha << 24));
 		guiGraphics.fill(0, 0, width, 18, (tintAlpha << 24) | 0x220000);
 		guiGraphics.fill(0, height - 18, width, height, (tintAlpha << 24) | 0x220000);
@@ -41,11 +46,11 @@ public class HorrorUiOverlays {
 		guiGraphics.fill(width - 18, 0, width, height, (tintAlpha << 24) | 0x220000);
 
 		if (sanity <= 35) {
-			int pulse = (int) ((Math.sin(System.currentTimeMillis() / 130.0D) + 1.0D) * 0.5D * 60.0D);
+			int pulse = (int) (((Math.sin(System.currentTimeMillis() / 130.0D) + 1.0D) * 0.5D * 60.0D) * visual);
 			guiGraphics.fill(0, 0, width, height, (Math.min(60, pulse) << 24) | 0x330000);
 		}
 		if (sanity <= 25) {
-			int scanAlpha = 18 + (int) ((Math.sin(System.currentTimeMillis() / 45.0D) + 1.0D) * 0.5D * 14.0D);
+			int scanAlpha = (int) ((18 + (Math.sin(System.currentTimeMillis() / 45.0D) + 1.0D) * 0.5D * 14.0D) * visual);
 			for (int y = 0; y < height; y += 4) {
 				guiGraphics.fill(0, y, width, y + 1, (scanAlpha << 24) | 0x101010);
 			}
@@ -147,6 +152,7 @@ public class HorrorUiOverlays {
 			int warningColor = 0xFF700000 + (warningPulse << 8);
 			guiGraphics.drawString(font, "WARNING: PSYCHOSIS RISK", leftPos + 8, topPos + imageHeight + 6, warningColor, false);
 		}
+		triggerCorruptedLootMoment(sanity);
 	}
 
 	private static void renderSilhouetteFlash(GuiGraphics guiGraphics, int width, int height) {
@@ -176,10 +182,18 @@ public class HorrorUiOverlays {
 		if (!SanityClientState.hasActiveJumpscare()) {
 			return;
 		}
+		SanityConfig config = SanityManager.getConfig();
+		if (config.streamerSafeMode) {
+			return;
+		}
 
 		float progress = SanityClientState.getJumpscareProgress();
 		int variant = SanityClientState.getJumpscareVariant() % 3;
-		int alpha = (int) (230.0F * (1.0F - progress * 0.75F));
+		float visual = clamp01(config.accessibilityVisualIntensity);
+		if (config.noHardFlashes) {
+			visual = Math.min(visual, 0.6F);
+		}
+		int alpha = (int) (230.0F * (1.0F - progress * 0.75F) * visual);
 		guiGraphics.fill(0, 0, width, height, (alpha << 24));
 
 		int cx = width / 2;
@@ -211,7 +225,10 @@ public class HorrorUiOverlays {
 
 		// Hard cut flash at the start.
 		if (progress < 0.12F) {
-			int flash = (int) (255.0F * (1.0F - progress / 0.12F));
+			if (config.noHardFlashes) {
+				return;
+			}
+			int flash = (int) (255.0F * (1.0F - progress / 0.12F) * visual);
 			guiGraphics.fill(0, 0, width, height, (flash << 24) | 0x00FFFFFF);
 		}
 	}
@@ -320,5 +337,30 @@ public class HorrorUiOverlays {
 
 	private static float clamp01(float value) {
 		return Math.max(0.0F, Math.min(1.0F, value));
+	}
+
+	private static void triggerCorruptedLootMoment(int sanity) {
+		Minecraft minecraft = Minecraft.getInstance();
+		if (minecraft.player == null || minecraft.level == null) {
+			return;
+		}
+		SanityConfig config = SanityManager.getConfig();
+		if (!config.corruptedLootMomentsEnabled || sanity > 35) {
+			return;
+		}
+		long now = System.currentTimeMillis();
+		if (now < nextLootCorruptionMs) {
+			return;
+		}
+
+		if (minecraft.player.getRandom().nextFloat() < clamp01(config.corruptedLootMomentChance) * 0.12F) {
+			minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.literal("Loot cache integrity failure..."), true);
+			float volume = 0.55F * clamp01(config.accessibilityAudioIntensity);
+			minecraft.player.playNotifySound(SoundEvents.CHEST_CLOSE, SoundSource.BLOCKS, Math.max(0.01F, volume), 0.65F + minecraft.player.getRandom().nextFloat() * 0.2F);
+			minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), SoundEvents.CREEPER_PRIMED, SoundSource.HOSTILE, Math.max(0.01F, volume * 0.8F),
+					0.7F + minecraft.player.getRandom().nextFloat() * 0.2F, false);
+			SanityClientState.triggerScarePulse(8, 3);
+		}
+		nextLootCorruptionMs = now + 1200L + minecraft.player.getRandom().nextInt(2200);
 	}
 }

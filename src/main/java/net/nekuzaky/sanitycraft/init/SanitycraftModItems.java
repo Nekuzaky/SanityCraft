@@ -4,6 +4,7 @@
 package net.nekuzaky.sanitycraft.init;
 
 import net.nekuzaky.sanitycraft.item.PillItem;
+import net.nekuzaky.sanitycraft.item.MentalshieldtotemItem;
 import net.nekuzaky.sanitycraft.SanitycraftMod;
 
 import net.minecraft.world.item.SpawnEggItem;
@@ -19,11 +20,13 @@ public class SanitycraftModItems {
 	public static Item STALKER_SPAWN_EGG;
 	public static Item BLOODY_CREEPER_SPAWN_EGG;
 	public static Item PILL;
+	public static Item MENTALSHIELDTOTEM;
 
 	public static void load() {
 		STALKER_SPAWN_EGG = register("stalker_spawn_egg", properties -> new SpawnEggItem(SanitycraftModEntities.STALKER, properties));
 		BLOODY_CREEPER_SPAWN_EGG = register("bloody_creeper_spawn_egg", properties -> new SpawnEggItem(SanitycraftModEntities.BLOODY_CREEPER, properties));
 		PILL = register("pill", PillItem::new);
+		MENTALSHIELDTOTEM = register("mentalshieldtotem", MentalshieldtotemItem::new);
 	}
 
 	// Start of user code block custom items

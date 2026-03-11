@@ -12,5 +12,7 @@ public record SanityEnvironmentSnapshot(
 		boolean sleeping,
 		boolean villageNearby,
 		boolean lightNearby,
-		boolean musicNearby) {
+		boolean musicNearby,
+		boolean ritualSafeZone,
+		boolean anomalyNearby) {
 }

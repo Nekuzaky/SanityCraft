@@ -27,6 +27,12 @@ public class SanityEffects {
 		RandomSource random = player.getRandom();
 		ServerLevel level = player.level();
 		SanityStage stage = SanityStageResolver.resolve(sanity);
+		if (component.hasHallucinationShield()) {
+			if (player.hasEffect(MobEffects.NAUSEA)) {
+				player.removeEffect(MobEffects.NAUSEA);
+			}
+			return;
+		}
 
 		if (stage == SanityStage.UNEASY) {
 			player.addEffect(new MobEffectInstance(MobEffects.NAUSEA, 120, 0, true, false, false));
@@ -35,6 +41,7 @@ public class SanityEffects {
 				player.removeEffect(MobEffects.NAUSEA);
 			}
 		}
+		applyAfflictions(player, stage, config);
 
 		if (stage == SanityStage.MILD_DISCOMFORT && component.canPlayStrangeSound()) {
 			HallucinationSoundManager.playStageSound(player, stage, random);
@@ -177,5 +184,19 @@ public class SanityEffects {
 			return 0.0F;
 		}
 		return Math.min(1.0F, value);
+	}
+
+	private static void applyAfflictions(ServerPlayer player, SanityStage stage, SanityConfig config) {
+		if (!config.sanityAfflictionsEnabled) {
+			return;
+		}
+		if (stage == SanityStage.UNSTABLE) {
+			player.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 80, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 0, true, false, false));
+		} else if (stage == SanityStage.SEVERE_BREAKDOWN) {
+			player.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 120, 1, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 80, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, true, false, false));
+		}
 	}
 }

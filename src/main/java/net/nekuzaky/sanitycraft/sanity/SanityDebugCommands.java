@@ -68,6 +68,41 @@ public class SanityDebugCommands {
 									SanityManager.initialize();
 									ctx.getSource().sendSuccess(() -> Component.literal("Sanity config reloaded."), true);
 									return 1;
-								}))));
+								}))
+						.then(Commands.literal("profile")
+								.then(Commands.literal("light").executes(ctx -> setProfile(ctx, "light")))
+								.then(Commands.literal("medium").executes(ctx -> setProfile(ctx, "medium")))
+								.then(Commands.literal("hardcore").executes(ctx -> setProfile(ctx, "hardcore")))
+								.then(Commands.literal("custom").executes(ctx -> setProfile(ctx, "custom"))))
+						.then(Commands.literal("journal")
+								.executes(ctx -> {
+									ServerPlayer player = ctx.getSource().getPlayerOrException();
+									var entries = SanityJournal.recent(player, 8);
+									if (entries.isEmpty()) {
+										ctx.getSource().sendSuccess(() -> Component.literal("Journal is empty."), false);
+										return 1;
+									}
+									ctx.getSource().sendSuccess(() -> Component.literal("Recent journal entries:"), false);
+									for (String line : entries) {
+										ctx.getSource().sendSuccess(() -> Component.literal("- " + line), false);
+									}
+									return 1;
+								})
+								.then(Commands.literal("clear")
+										.executes(ctx -> {
+											ServerPlayer player = ctx.getSource().getPlayerOrException();
+											SanityJournal.clear(player);
+											ctx.getSource().sendSuccess(() -> Component.literal("Journal cleared."), true);
+											return 1;
+										})))));
+	}
+
+	private static int setProfile(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> ctx, String profile) {
+		if (!SanityManager.applyProfile(profile)) {
+			ctx.getSource().sendFailure(Component.literal("Invalid profile."));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.literal("Applied sanity profile: " + profile), true);
+		return 1;
 	}
 }

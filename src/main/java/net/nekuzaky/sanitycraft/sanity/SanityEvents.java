@@ -20,9 +20,14 @@ public class SanityEvents {
 		PlayerEvents.END_PLAYER_TICK.register(player -> {
 			if (player instanceof ServerPlayer serverPlayer) {
 				PlayerSanityComponent component = SanityManager.get(serverPlayer);
+				boolean wokeFromSleep = component.markSleepStateAndCheckWake(serverPlayer.isSleeping());
+				if (wokeFromSleep) {
+					SanityManager.onSleepWake(serverPlayer);
+				}
 				SanityManager.tickZeroSanityDeath(serverPlayer);
 				TorchHandLightHandler.tick(serverPlayer, SanityManager.getConfig());
 				SanityNarrativeDirector.tick(serverPlayer, component, SanityManager.getConfig());
+				SanityFractureQuestDirector.tick(serverPlayer, component, SanityManager.getConfig());
 				SanityStalkerHuntDirector.tick(serverPlayer);
 				SanityManager.tick(serverPlayer);
 			}
@@ -35,6 +40,8 @@ public class SanityEvents {
 		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			SanityPersistence.set(handler.player, SanityManager.get(handler.player).getSanity());
+			SanityJournal.clear(handler.player);
+			SanityFractureQuestDirector.clear(handler.player);
 			SanityManager.remove(handler.player);
 		});
 		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {

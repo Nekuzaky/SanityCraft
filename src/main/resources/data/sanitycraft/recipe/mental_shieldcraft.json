@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aaa",
+    "aba",
+    "aaa"
+  ],
+  "key": {
+    "a": "sanitycraft:pill",
+    "b": "minecraft:totem_of_undying"
+  },
+  "result": {
+    "id": "sanitycraft:mentalshieldtotem",
+    "count": 1
+  }
+}

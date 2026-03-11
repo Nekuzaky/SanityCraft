@@ -15,7 +15,13 @@ public class PlayerSanityComponent {
 	private int ghostCooldown = 0;
 	private int whisperCooldown = 0;
 	private int jumpscareCooldown = 0;
+	private int mimicCooldown = 0;
+	private int journalCooldown = 0;
+	private int falseUiCooldown = 0;
+	private int lootCorruptionCooldown = 0;
+	private boolean sleepingLastTick = false;
 	private int zeroSanityTicks = 0;
+	private int hallucinationShieldTicks = 0;
 
 	public int getSanity() {
 		return sanity;
@@ -54,6 +60,21 @@ public class PlayerSanityComponent {
 		}
 		if (jumpscareCooldown > 0) {
 			jumpscareCooldown--;
+		}
+		if (mimicCooldown > 0) {
+			mimicCooldown--;
+		}
+		if (journalCooldown > 0) {
+			journalCooldown--;
+		}
+		if (falseUiCooldown > 0) {
+			falseUiCooldown--;
+		}
+		if (lootCorruptionCooldown > 0) {
+			lootCorruptionCooldown--;
+		}
+		if (hallucinationShieldTicks > 0) {
+			hallucinationShieldTicks--;
 		}
 	}
 
@@ -97,6 +118,44 @@ public class PlayerSanityComponent {
 		jumpscareCooldown = random.nextIntBetweenInclusive(600, 1600);
 	}
 
+	public boolean canPlayMimic() {
+		return mimicCooldown <= 0;
+	}
+
+	public void resetMimicCooldown(RandomSource random) {
+		mimicCooldown = random.nextIntBetweenInclusive(120, 260);
+	}
+
+	public boolean canWriteJournal() {
+		return journalCooldown <= 0;
+	}
+
+	public void resetJournalCooldown(RandomSource random) {
+		journalCooldown = random.nextIntBetweenInclusive(180, 320);
+	}
+
+	public boolean markSleepStateAndCheckWake(boolean sleepingNow) {
+		boolean woke = sleepingLastTick && !sleepingNow;
+		sleepingLastTick = sleepingNow;
+		return woke;
+	}
+
+	public boolean canTriggerFalseUi() {
+		return falseUiCooldown <= 0;
+	}
+
+	public void resetFalseUiCooldown(RandomSource random) {
+		falseUiCooldown = random.nextIntBetweenInclusive(120, 260);
+	}
+
+	public boolean canTriggerLootCorruption() {
+		return lootCorruptionCooldown <= 0;
+	}
+
+	public void resetLootCorruptionCooldown(RandomSource random) {
+		lootCorruptionCooldown = random.nextIntBetweenInclusive(160, 320);
+	}
+
 	public boolean tickZeroSanityTimer(int deathDelayTicks) {
 		if (sanity <= MIN_SANITY) {
 			zeroSanityTicks++;
@@ -108,5 +167,17 @@ public class PlayerSanityComponent {
 
 	public void resetZeroSanityTimer() {
 		zeroSanityTicks = 0;
+	}
+
+	public void setHallucinationShieldTicks(int ticks) {
+		hallucinationShieldTicks = Math.max(hallucinationShieldTicks, Math.max(0, ticks));
+	}
+
+	public boolean hasHallucinationShield() {
+		return hallucinationShieldTicks > 0;
+	}
+
+	public int getHallucinationShieldTicks() {
+		return hallucinationShieldTicks;
 	}
 }

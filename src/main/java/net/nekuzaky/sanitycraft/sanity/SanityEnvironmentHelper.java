@@ -6,11 +6,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.nekuzaky.sanitycraft.init.SanitycraftModItems;
 
 public class SanityEnvironmentHelper {
 	private SanityEnvironmentHelper() {
@@ -31,7 +33,9 @@ public class SanityEnvironmentHelper {
 				player.isSleeping(),
 				isNearVillage(player, config.villageRadius),
 				isNearLight(level, pos, config.lightRadius),
-				isNearMusic(level, pos, config.musicRadius));
+				isNearMusic(level, pos, config.musicRadius),
+				isInRitualSafeZone(player, level, pos, config),
+				isNearAnomalyStructure(level, pos));
 	}
 
 	private static boolean isDark(ServerLevel level, BlockPos pos) {
@@ -92,6 +96,69 @@ public class SanityEnvironmentHelper {
 					BlockPos check = center.offset(x, y, z);
 					BlockState state = level.getBlockState(check);
 					if (state.is(Blocks.JUKEBOX) && state.hasProperty(JukeboxBlock.HAS_RECORD) && state.getValue(JukeboxBlock.HAS_RECORD)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isInRitualSafeZone(ServerPlayer player, ServerLevel level, BlockPos pos, SanityConfig config) {
+		if (!config.ritualSafeZoneEnabled) {
+			return false;
+		}
+		if (!isHoldingPill(player.getMainHandItem()) && !isHoldingPill(player.getOffhandItem())) {
+			return false;
+		}
+
+		int y = pos.getY();
+		BlockPos[] ring = new BlockPos[] {
+				new BlockPos(pos.getX() + 2, y, pos.getZ()),
+				new BlockPos(pos.getX() - 2, y, pos.getZ()),
+				new BlockPos(pos.getX(), y, pos.getZ() + 2),
+				new BlockPos(pos.getX(), y, pos.getZ() - 2),
+				new BlockPos(pos.getX() + 2, y, pos.getZ() + 2),
+				new BlockPos(pos.getX() - 2, y, pos.getZ() - 2),
+				new BlockPos(pos.getX() + 2, y, pos.getZ() - 2),
+				new BlockPos(pos.getX() - 2, y, pos.getZ() + 2)
+		};
+
+		int torchCount = 0;
+		for (BlockPos check : ring) {
+			BlockState state = level.getBlockState(check);
+			if (isTorchLike(state)) {
+				torchCount++;
+				continue;
+			}
+			BlockState up = level.getBlockState(check.above());
+			if (isTorchLike(up)) {
+				torchCount++;
+			}
+		}
+		return torchCount >= 6;
+	}
+
+	private static boolean isHoldingPill(ItemStack stack) {
+		return stack != null && !stack.isEmpty() && stack.getItem() == SanitycraftModItems.PILL;
+	}
+
+	private static boolean isTorchLike(BlockState state) {
+		return state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH) || state.is(Blocks.SOUL_TORCH) || state.is(Blocks.SOUL_WALL_TORCH) || state.is(Blocks.REDSTONE_TORCH)
+				|| state.is(Blocks.REDSTONE_WALL_TORCH);
+	}
+
+	private static boolean isNearAnomalyStructure(ServerLevel level, BlockPos center) {
+		for (int x = -6; x <= 6; x++) {
+			for (int y = -3; y <= 3; y++) {
+				for (int z = -6; z <= 6; z++) {
+					BlockPos base = center.offset(x, y, z);
+					BlockState state = level.getBlockState(base);
+					if (!state.is(Blocks.CRYING_OBSIDIAN)) {
+						continue;
+					}
+					BlockState above = level.getBlockState(base.above());
+					if (above.is(Blocks.SOUL_FIRE) || above.is(Blocks.SOUL_LANTERN) || above.is(Blocks.RED_CANDLE) || above.is(Blocks.CANDLE)) {
 						return true;
 					}
 				}

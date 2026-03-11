@@ -23,6 +23,9 @@ public class SanityCalculator {
 		if (env.deepDark()) {
 			loss += config.deepDarkLoss;
 		}
+		if (env.anomalyNearby()) {
+			loss += Math.max(0, config.anomalyLoss);
+		}
 
 		if (env.sleeping()) {
 			gain += config.sleepGain;
@@ -35,6 +38,9 @@ public class SanityCalculator {
 		}
 		if (env.musicNearby()) {
 			gain += config.musicGain;
+		}
+		if (env.ritualSafeZone()) {
+			gain += Math.max(0, config.ritualSafeZoneGain);
 		}
 
 		float contextMultiplier = 1.0F;

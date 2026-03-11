@@ -49,6 +49,7 @@ public class SanitycraftMod implements ModInitializer {
 		net.nekuzaky.sanitycraft.sanity.SanityEvents.register();
 		net.nekuzaky.sanitycraft.sanity.SanityDebugCommands.register();
 		net.nekuzaky.sanitycraft.sanity.PillSanityHandler.register();
+		net.nekuzaky.sanitycraft.sanity.MentalShieldHandler.register();
 		// End of user code block mod init
 	}
 

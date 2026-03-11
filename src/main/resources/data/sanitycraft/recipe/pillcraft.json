@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ab",
+    "cd"
+  ],
+  "key": {
+    "a": "minecraft:apple",
+    "b": "minecraft:glass_bottle",
+    "c": "minecraft:cooked_beef",
+    "d": "minecraft:sugar"
+  },
+  "result": {
+    "id": "sanitycraft:pill",
+    "count": 1
+  }
+}
