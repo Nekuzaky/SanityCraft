@@ -20,6 +20,8 @@ public class SanityEvents {
 		PlayerEvents.END_PLAYER_TICK.register(player -> {
 			if (player instanceof ServerPlayer serverPlayer) {
 				PlayerSanityComponent component = SanityManager.get(serverPlayer);
+				SanityManager.tickZeroSanityDeath(serverPlayer);
+				TorchHandLightHandler.tick(serverPlayer, SanityManager.getConfig());
 				SanityNarrativeDirector.tick(serverPlayer, component, SanityManager.getConfig());
 				SanityStalkerHuntDirector.tick(serverPlayer);
 				SanityManager.tick(serverPlayer);

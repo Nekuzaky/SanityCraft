@@ -22,7 +22,10 @@ public class SanityEnvironmentHelper {
 		return new SanityEnvironmentSnapshot(
 				isDark(level, pos),
 				isCave(level, pos),
+				isUnderground(level, pos),
 				isNearHostile(player, config.hostileRadius),
+				isNight(level),
+				level.isRainingAt(pos.above()),
 				level.isThundering(),
 				isDeepDark(level, pos),
 				player.isSleeping(),
@@ -37,6 +40,15 @@ public class SanityEnvironmentHelper {
 
 	private static boolean isCave(ServerLevel level, BlockPos pos) {
 		return !level.canSeeSky(pos) && pos.getY() < level.getSeaLevel() - 5;
+	}
+
+	private static boolean isUnderground(ServerLevel level, BlockPos pos) {
+		return !level.canSeeSky(pos) && pos.getY() < level.getSeaLevel() + 2;
+	}
+
+	private static boolean isNight(ServerLevel level) {
+		long timeOfDay = level.getDayTime() % 24000L;
+		return timeOfDay >= 13000L && timeOfDay <= 23000L;
 	}
 
 	private static boolean isDeepDark(ServerLevel level, BlockPos pos) {

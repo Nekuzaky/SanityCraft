@@ -41,7 +41,6 @@ public class SanitycraftModEntities {
 	}
 
 	public static void init() {
-		StalkerEntity.init();
 	}
 
 	public static void registerAttributes() {

@@ -32,8 +32,33 @@ public class SanityConfig {
 	public int villageRadius = 28;
 	public int lightRadius = 6;
 	public int musicRadius = 10;
+	public boolean contextualDecayEnabled = true;
+	public float nightDecayMultiplier = 1.15F;
+	public float rainDecayMultiplier = 1.10F;
+	public float undergroundDecayMultiplier = 1.25F;
 	public int pillSanityGain = 20;
 	public int pillCooldownTicks = 60;
+	public boolean ambientFogEnabled = true;
+	public int ambientFogBaseAlpha = 8;
+	public int ambientFogMaxAlpha = 42;
+	public boolean cinematicCaveFogEnabled = true;
+	public int cinematicCaveFogBonusAlpha = 16;
+	public boolean torchRepelsFog = true;
+	public float heldTorchFogRepel = 0.45F;
+	public float nearbyTorchFogRepel = 0.30F;
+	public boolean torchHandLightEnabled = true;
+	public int torchHandLightVisionDurationTicks = 60;
+	public boolean ambienceDirectorEnabled = true;
+	public float ambienceMasterVolume = 1.0F;
+	public boolean ambienceHeartbeatEnabled = true;
+	public boolean ambienceSoundTrapsEnabled = true;
+	public int ambienceMinSanityActive = 80;
+	public boolean nearMissEnabled = true;
+	public int nearMissMinIntervalTicks = 1800;
+	public int nearMissMaxIntervalTicks = 5200;
+	public boolean caveMiningHallucinationEnabled = true;
+	public int caveMiningMinIntervalTicks = 2600;
+	public int caveMiningMaxIntervalTicks = 7600;
 
 	public boolean hallucinationsEnabled = true;
 	public boolean narrativeEventsEnabled = true;
@@ -50,6 +75,8 @@ public class SanityConfig {
 	public boolean bloodyCreeperHallucinationEnabled = true;
 	public int bloodyCreeperSpawnChancePercent = 20;
 	public int bloodyCreeperLifetimeSeconds = 14;
+	public boolean zeroSanityDeathEnabled = true;
+	public int zeroSanityDeathDelaySeconds = 30;
 
 	public static SanityConfig loadOrCreate() {
 		SanityConfig config = new SanityConfig();
@@ -76,8 +103,33 @@ public class SanityConfig {
 			config.villageRadius = readInt(object, "villageRadius", config.villageRadius);
 			config.lightRadius = readInt(object, "lightRadius", config.lightRadius);
 			config.musicRadius = readInt(object, "musicRadius", config.musicRadius);
+			config.contextualDecayEnabled = readBoolean(object, "contextualDecayEnabled", config.contextualDecayEnabled);
+			config.nightDecayMultiplier = readFloat(object, "nightDecayMultiplier", config.nightDecayMultiplier);
+			config.rainDecayMultiplier = readFloat(object, "rainDecayMultiplier", config.rainDecayMultiplier);
+			config.undergroundDecayMultiplier = readFloat(object, "undergroundDecayMultiplier", config.undergroundDecayMultiplier);
 			config.pillSanityGain = readInt(object, "pillSanityGain", config.pillSanityGain);
 			config.pillCooldownTicks = readInt(object, "pillCooldownTicks", config.pillCooldownTicks);
+			config.ambientFogEnabled = readBoolean(object, "ambientFogEnabled", config.ambientFogEnabled);
+			config.ambientFogBaseAlpha = readInt(object, "ambientFogBaseAlpha", config.ambientFogBaseAlpha);
+			config.ambientFogMaxAlpha = readInt(object, "ambientFogMaxAlpha", config.ambientFogMaxAlpha);
+			config.cinematicCaveFogEnabled = readBoolean(object, "cinematicCaveFogEnabled", config.cinematicCaveFogEnabled);
+			config.cinematicCaveFogBonusAlpha = readInt(object, "cinematicCaveFogBonusAlpha", config.cinematicCaveFogBonusAlpha);
+			config.torchRepelsFog = readBoolean(object, "torchRepelsFog", config.torchRepelsFog);
+			config.heldTorchFogRepel = readFloat(object, "heldTorchFogRepel", config.heldTorchFogRepel);
+			config.nearbyTorchFogRepel = readFloat(object, "nearbyTorchFogRepel", config.nearbyTorchFogRepel);
+			config.torchHandLightEnabled = readBoolean(object, "torchHandLightEnabled", config.torchHandLightEnabled);
+			config.torchHandLightVisionDurationTicks = readInt(object, "torchHandLightVisionDurationTicks", config.torchHandLightVisionDurationTicks);
+			config.ambienceDirectorEnabled = readBoolean(object, "ambienceDirectorEnabled", config.ambienceDirectorEnabled);
+			config.ambienceMasterVolume = readFloat(object, "ambienceMasterVolume", config.ambienceMasterVolume);
+			config.ambienceHeartbeatEnabled = readBoolean(object, "ambienceHeartbeatEnabled", config.ambienceHeartbeatEnabled);
+			config.ambienceSoundTrapsEnabled = readBoolean(object, "ambienceSoundTrapsEnabled", config.ambienceSoundTrapsEnabled);
+			config.ambienceMinSanityActive = readInt(object, "ambienceMinSanityActive", config.ambienceMinSanityActive);
+			config.nearMissEnabled = readBoolean(object, "nearMissEnabled", config.nearMissEnabled);
+			config.nearMissMinIntervalTicks = readInt(object, "nearMissMinIntervalTicks", config.nearMissMinIntervalTicks);
+			config.nearMissMaxIntervalTicks = readInt(object, "nearMissMaxIntervalTicks", config.nearMissMaxIntervalTicks);
+			config.caveMiningHallucinationEnabled = readBoolean(object, "caveMiningHallucinationEnabled", config.caveMiningHallucinationEnabled);
+			config.caveMiningMinIntervalTicks = readInt(object, "caveMiningMinIntervalTicks", config.caveMiningMinIntervalTicks);
+			config.caveMiningMaxIntervalTicks = readInt(object, "caveMiningMaxIntervalTicks", config.caveMiningMaxIntervalTicks);
 			config.hallucinationsEnabled = readBoolean(object, "hallucinationsEnabled", config.hallucinationsEnabled);
 			config.narrativeEventsEnabled = readBoolean(object, "narrativeEventsEnabled", config.narrativeEventsEnabled);
 			config.uneasyWhisperChance = readFloat(object, "uneasyWhisperChance", config.uneasyWhisperChance);
@@ -92,6 +144,8 @@ public class SanityConfig {
 			config.bloodyCreeperHallucinationEnabled = readBoolean(object, "bloodyCreeperHallucinationEnabled", config.bloodyCreeperHallucinationEnabled);
 			config.bloodyCreeperSpawnChancePercent = readInt(object, "bloodyCreeperSpawnChancePercent", config.bloodyCreeperSpawnChancePercent);
 			config.bloodyCreeperLifetimeSeconds = readInt(object, "bloodyCreeperLifetimeSeconds", config.bloodyCreeperLifetimeSeconds);
+			config.zeroSanityDeathEnabled = readBoolean(object, "zeroSanityDeathEnabled", config.zeroSanityDeathEnabled);
+			config.zeroSanityDeathDelaySeconds = readInt(object, "zeroSanityDeathDelaySeconds", config.zeroSanityDeathDelaySeconds);
 		} catch (Exception e) {
 			SanitycraftMod.LOGGER.error("Failed to load sanitycraft config. Using defaults.", e);
 		}
@@ -128,8 +182,33 @@ public class SanityConfig {
 		object.addProperty("villageRadius", villageRadius);
 		object.addProperty("lightRadius", lightRadius);
 		object.addProperty("musicRadius", musicRadius);
+		object.addProperty("contextualDecayEnabled", contextualDecayEnabled);
+		object.addProperty("nightDecayMultiplier", nightDecayMultiplier);
+		object.addProperty("rainDecayMultiplier", rainDecayMultiplier);
+		object.addProperty("undergroundDecayMultiplier", undergroundDecayMultiplier);
 		object.addProperty("pillSanityGain", pillSanityGain);
 		object.addProperty("pillCooldownTicks", pillCooldownTicks);
+		object.addProperty("ambientFogEnabled", ambientFogEnabled);
+		object.addProperty("ambientFogBaseAlpha", ambientFogBaseAlpha);
+		object.addProperty("ambientFogMaxAlpha", ambientFogMaxAlpha);
+		object.addProperty("cinematicCaveFogEnabled", cinematicCaveFogEnabled);
+		object.addProperty("cinematicCaveFogBonusAlpha", cinematicCaveFogBonusAlpha);
+		object.addProperty("torchRepelsFog", torchRepelsFog);
+		object.addProperty("heldTorchFogRepel", heldTorchFogRepel);
+		object.addProperty("nearbyTorchFogRepel", nearbyTorchFogRepel);
+		object.addProperty("torchHandLightEnabled", torchHandLightEnabled);
+		object.addProperty("torchHandLightVisionDurationTicks", torchHandLightVisionDurationTicks);
+		object.addProperty("ambienceDirectorEnabled", ambienceDirectorEnabled);
+		object.addProperty("ambienceMasterVolume", ambienceMasterVolume);
+		object.addProperty("ambienceHeartbeatEnabled", ambienceHeartbeatEnabled);
+		object.addProperty("ambienceSoundTrapsEnabled", ambienceSoundTrapsEnabled);
+		object.addProperty("ambienceMinSanityActive", ambienceMinSanityActive);
+		object.addProperty("nearMissEnabled", nearMissEnabled);
+		object.addProperty("nearMissMinIntervalTicks", nearMissMinIntervalTicks);
+		object.addProperty("nearMissMaxIntervalTicks", nearMissMaxIntervalTicks);
+		object.addProperty("caveMiningHallucinationEnabled", caveMiningHallucinationEnabled);
+		object.addProperty("caveMiningMinIntervalTicks", caveMiningMinIntervalTicks);
+		object.addProperty("caveMiningMaxIntervalTicks", caveMiningMaxIntervalTicks);
 		object.addProperty("hallucinationsEnabled", hallucinationsEnabled);
 		object.addProperty("narrativeEventsEnabled", narrativeEventsEnabled);
 		object.addProperty("uneasyWhisperChance", uneasyWhisperChance);
@@ -144,6 +223,8 @@ public class SanityConfig {
 		object.addProperty("bloodyCreeperHallucinationEnabled", bloodyCreeperHallucinationEnabled);
 		object.addProperty("bloodyCreeperSpawnChancePercent", bloodyCreeperSpawnChancePercent);
 		object.addProperty("bloodyCreeperLifetimeSeconds", bloodyCreeperLifetimeSeconds);
+		object.addProperty("zeroSanityDeathEnabled", zeroSanityDeathEnabled);
+		object.addProperty("zeroSanityDeathDelaySeconds", zeroSanityDeathDelaySeconds);
 		return object;
 	}
 

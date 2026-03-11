@@ -20,7 +20,10 @@ public class SanitycraftModClient implements ClientModInitializer {
 				(payload, context) -> context.client().execute(() -> net.nekuzaky.sanitycraft.client.SanityClientState.setSanity(payload.sanity())));
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(net.nekuzaky.sanitycraft.sanity.SanityJumpscarePayload.TYPE,
 				(payload, context) -> context.client().execute(() -> net.nekuzaky.sanitycraft.client.SanityClientState.triggerJumpscare(payload.variant(), payload.durationTicks())));
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(net.nekuzaky.sanitycraft.sanity.SanityScarePulsePayload.TYPE,
+				(payload, context) -> context.client().execute(() -> net.nekuzaky.sanitycraft.client.SanityClientState.triggerScarePulse(payload.durationTicks(), payload.intensity())));
 		net.nekuzaky.sanitycraft.client.SanityHudRenderer.register();
+		net.nekuzaky.sanitycraft.client.HorrorAmbienceDirector.register();
 		// End of user code block mod init
 	}
 	// Start of user code block mod methods

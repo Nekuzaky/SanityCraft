@@ -2,7 +2,7 @@
   "_fv": 79,
   "_type": "particle",
   "definition": {
-    "texture": "blood_part",
+    "texture": "blood",
     "animate": false,
     "frameDuration": 1,
     "width": 0.2,

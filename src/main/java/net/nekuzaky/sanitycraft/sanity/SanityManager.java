@@ -1,6 +1,7 @@
 package net.nekuzaky.sanitycraft.sanity;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +44,21 @@ public class SanityManager {
 		PlayerSanityComponent source = get(oldPlayer);
 		PlayerSanityComponent target = get(newPlayer);
 		target.setSanity(source.getSanity());
+		target.resetZeroSanityTimer();
 		SanityPersistence.set(newPlayer, target.getSanity());
+	}
+
+	public static void tickZeroSanityDeath(ServerPlayer player) {
+		if (!config.zeroSanityDeathEnabled) {
+			return;
+		}
+		PlayerSanityComponent component = get(player);
+		int delayTicks = Math.max(1, config.zeroSanityDeathDelaySeconds) * 20;
+		if (component.tickZeroSanityTimer(delayTicks)) {
+			component.resetZeroSanityTimer();
+			player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+			player.displayClientMessage(Component.literal("Your mind collapsed."), true);
+		}
 	}
 
 	public static void tick(ServerPlayer player) {

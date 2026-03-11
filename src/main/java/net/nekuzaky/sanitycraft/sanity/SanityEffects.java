@@ -129,7 +129,7 @@ public class SanityEffects {
 
 		SanitycraftMod.queueServerWork(Math.max(1, config.bloodyCreeperLifetimeSeconds) * 20, () -> {
 			if (creeper.isAlive()) {
-				creeper.discard();
+				creeper.triggerHallucinationExplosion();
 			}
 		});
 	}

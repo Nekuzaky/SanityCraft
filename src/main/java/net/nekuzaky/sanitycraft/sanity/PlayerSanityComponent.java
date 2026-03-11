@@ -15,6 +15,7 @@ public class PlayerSanityComponent {
 	private int ghostCooldown = 0;
 	private int whisperCooldown = 0;
 	private int jumpscareCooldown = 0;
+	private int zeroSanityTicks = 0;
 
 	public int getSanity() {
 		return sanity;
@@ -22,6 +23,9 @@ public class PlayerSanityComponent {
 
 	public void setSanity(int sanity) {
 		this.sanity = Mth.clamp(sanity, MIN_SANITY, MAX_SANITY);
+		if (this.sanity > MIN_SANITY) {
+			zeroSanityTicks = 0;
+		}
 	}
 
 	public int addSanity(int delta) {
@@ -91,5 +95,18 @@ public class PlayerSanityComponent {
 
 	public void resetJumpscareCooldown(RandomSource random) {
 		jumpscareCooldown = random.nextIntBetweenInclusive(600, 1600);
+	}
+
+	public boolean tickZeroSanityTimer(int deathDelayTicks) {
+		if (sanity <= MIN_SANITY) {
+			zeroSanityTicks++;
+			return zeroSanityTicks >= Math.max(1, deathDelayTicks);
+		}
+		zeroSanityTicks = 0;
+		return false;
+	}
+
+	public void resetZeroSanityTimer() {
+		zeroSanityTicks = 0;
 	}
 }

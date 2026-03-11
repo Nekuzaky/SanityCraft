@@ -5,37 +5,52 @@ public class SanityCalculator {
 	}
 
 	public static int computeDelta(SanityEnvironmentSnapshot env, SanityConfig config) {
-		int delta = 0;
+		int loss = 0;
+		int gain = 0;
 
 		if (env.dark()) {
-			delta -= config.darknessLoss;
+			loss += config.darknessLoss;
 		}
 		if (env.cave()) {
-			delta -= config.caveLoss;
+			loss += config.caveLoss;
 		}
 		if (env.hostileNearby()) {
-			delta -= config.hostileLoss;
+			loss += config.hostileLoss;
 		}
 		if (env.thunderstorm()) {
-			delta -= config.thunderLoss;
+			loss += config.thunderLoss;
 		}
 		if (env.deepDark()) {
-			delta -= config.deepDarkLoss;
+			loss += config.deepDarkLoss;
 		}
 
 		if (env.sleeping()) {
-			delta += config.sleepGain;
+			gain += config.sleepGain;
 		}
 		if (env.villageNearby()) {
-			delta += config.villageGain;
+			gain += config.villageGain;
 		}
 		if (env.lightNearby()) {
-			delta += config.lightGain;
+			gain += config.lightGain;
 		}
 		if (env.musicNearby()) {
-			delta += config.musicGain;
+			gain += config.musicGain;
 		}
 
-		return delta;
+		float contextMultiplier = 1.0F;
+		if (config.contextualDecayEnabled) {
+			if (env.night()) {
+				contextMultiplier *= Math.max(0.0F, config.nightDecayMultiplier);
+			}
+			if (env.rain()) {
+				contextMultiplier *= Math.max(0.0F, config.rainDecayMultiplier);
+			}
+			if (env.underground()) {
+				contextMultiplier *= Math.max(0.0F, config.undergroundDecayMultiplier);
+			}
+		}
+
+		int scaledLoss = Math.round(loss * contextMultiplier);
+		return gain - scaledLoss;
 	}
 }

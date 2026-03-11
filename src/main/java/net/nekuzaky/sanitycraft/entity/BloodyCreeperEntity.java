@@ -1,5 +1,9 @@
 package net.nekuzaky.sanitycraft.entity;
 
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -16,8 +20,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerPlayer;
+import net.nekuzaky.sanitycraft.sanity.SanityNetworking;
 
 public class BloodyCreeperEntity extends Monster {
+	private boolean hallucinationExploded = false;
+
 	public BloodyCreeperEntity(EntityType<BloodyCreeperEntity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
@@ -43,6 +51,38 @@ public class BloodyCreeperEntity extends Monster {
 	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (this.level().isClientSide() || !this.isAlive()) {
+			return;
+		}
+		if (!this.getTags().contains("sanitycraft_hallucination_creeper")) {
+			return;
+		}
+		LivingEntity target = this.getTarget();
+		if (target != null && target.isAlive() && this.distanceToSqr(target) <= 9.0D) {
+			triggerHallucinationExplosion();
+		}
+	}
+
+	public void triggerHallucinationExplosion() {
+		if (hallucinationExploded || this.level().isClientSide()) {
+			return;
+		}
+		hallucinationExploded = true;
+		Level level = this.level();
+		level.playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.0F, 0.95F + this.getRandom().nextFloat() * 0.15F);
+		if (level instanceof ServerLevel serverLevel) {
+			serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, this.getX(), this.getY() + 0.8D, this.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+			serverLevel.sendParticles(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.6D, this.getZ(), 22, 0.35D, 0.25D, 0.35D, 0.02D);
+		}
+		if (this.getTarget() instanceof ServerPlayer targetPlayer) {
+			SanityNetworking.triggerScarePulse(targetPlayer, 16, 6);
+		}
+		this.discard();
 	}
 
 	@Override

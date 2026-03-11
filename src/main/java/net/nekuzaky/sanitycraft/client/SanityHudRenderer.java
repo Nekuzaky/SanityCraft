@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.item.ItemStack;
 
 public class SanityHudRenderer {
 	private SanityHudRenderer() {
@@ -20,21 +21,26 @@ public class SanityHudRenderer {
 		}
 
 		int sanity = SanityClientState.getSanity();
-		int barWidth = 120;
-		int barHeight = 10;
-		int x = 12;
-		int y = 12;
+		int barWidth = 88;
+		int barHeight = 5;
+		int x = 8;
+		int y = 8;
 
 		int fill = (int) Math.round((sanity / 100.0D) * barWidth);
 		int color = getColor(sanity);
-		int jitter = sanity <= 30 ? (int) ((Math.sin(System.currentTimeMillis() / 60.0D)) * 2.0D) : 0;
+		int jitter = sanity <= 20 ? (int) ((Math.sin(System.currentTimeMillis() / 70.0D)) * 1.0D) : 0;
 
 		renderMetalContainer(guiGraphics, x + jitter, y + jitter, barWidth, barHeight);
 		renderMetalFill(guiGraphics, x + jitter, y + jitter, fill, barHeight, color);
 
 		Font font = minecraft.font;
-		guiGraphics.drawString(font, "SANITY  " + sanity + "/100", x + 2 + jitter, y + barHeight + 5 + jitter, 0xFFE5D9D9, false);
-		guiGraphics.drawString(font, getStageLabel(sanity), x + 2 + jitter, y + barHeight + 14 + jitter, 0xFFC49D9D, false);
+		guiGraphics.drawString(font, "S:" + sanity, x + barWidth + 6 + jitter, y - 1 + jitter, 0xD0C8C8C8, false);
+		if (sanity <= 40) {
+			guiGraphics.drawString(font, getStageLabel(sanity), x + 2 + jitter, y + barHeight + 3 + jitter, 0xCFC49D9D, false);
+		}
+		if (SanityClientState.isZeroSanityActive()) {
+			renderZeroSanityHudGlitch(guiGraphics, minecraft, sanity);
+		}
 		HorrorUiOverlays.renderGlobalFearOverlay(guiGraphics, sanity);
 	}
 
@@ -71,19 +77,18 @@ public class SanityHudRenderer {
 	}
 
 	private static void renderMetalContainer(GuiGraphics guiGraphics, int x, int y, int width, int height) {
-		guiGraphics.fill(x - 5, y - 5, x + width + 5, y + height + 26, 0x8A050505);
-		guiGraphics.fill(x - 2, y - 2, x + width + 2, y + height + 2, 0xFF4A4A4A);
-		guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFB9B9B9);
-		guiGraphics.fill(x, y, x + width, y + height, 0xFF1A1A1A);
+		guiGraphics.fill(x - 2, y - 2, x + width + 2, y + height + 2, 0x6A050505);
+		guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xC84A4A4A);
+		guiGraphics.fill(x, y, x + width, y + height, 0xC21A1A1A);
 
 		for (int i = 0; i < height; i++) {
 			int tone = 42 + (int) ((i / (double) Math.max(1, height)) * 32.0D);
-			int line = 0xFF000000 | (tone << 16) | (tone << 8) | tone;
+			int line = 0xCC000000 | (tone << 16) | (tone << 8) | tone;
 			guiGraphics.fill(x, y + i, x + width, y + i + 1, line);
 		}
 
 		for (int i = 0; i < width; i += 6) {
-			int streak = 0x18000000 | (0x22 << 16) | (0x22 << 8) | 0x22;
+			int streak = 0x12000000 | (0x22 << 16) | (0x22 << 8) | 0x22;
 			guiGraphics.fill(x + i, y, x + i + 1, y + height, streak);
 		}
 	}
@@ -105,5 +110,55 @@ public class SanityHudRenderer {
 
 		int shineX = x + (int) ((System.currentTimeMillis() / 18L) % Math.max(2, clamped + 10)) - 10;
 		guiGraphics.fill(shineX, y, shineX + 2, y + height, 0x55FFFFFF);
+	}
+
+	private static void renderZeroSanityHudGlitch(GuiGraphics guiGraphics, Minecraft minecraft, int sanity) {
+		float pulse = SanityClientState.getZeroSanityPulse();
+		int width = guiGraphics.guiWidth();
+		int height = guiGraphics.guiHeight();
+		int flashAlpha = clamp(18 + (int) (pulse * 86.0F), 0, 140);
+		guiGraphics.fill(0, 0, width, height, (flashAlpha << 24) | 0x240000);
+
+		renderHeartBlinkOverlay(guiGraphics, width, height, pulse);
+		renderDurabilityBlinkOverlay(guiGraphics, minecraft, width, height, pulse);
+
+		Font font = minecraft.font;
+		int eta = Math.max(0, 30 - SanityClientState.getZeroSanityElapsedSeconds());
+		guiGraphics.drawString(font, "MENTAL COLLAPSE IN " + eta + "s", width / 2 - 56, height - 60, 0xFFD35A5A, true);
+	}
+
+	private static void renderHeartBlinkOverlay(GuiGraphics guiGraphics, int width, int height, float pulse) {
+		int heartsX = width / 2 - 91;
+		int heartsY = height - 39;
+		int blinkAlpha = clamp(42 + (int) (pulse * 130.0F), 0, 180);
+		int color = (blinkAlpha << 24) | 0x8A0000;
+		for (int i = 0; i < 10; i++) {
+			int hx = heartsX + i * 8;
+			guiGraphics.fill(hx, heartsY, hx + 7, heartsY + 7, color);
+		}
+	}
+
+	private static void renderDurabilityBlinkOverlay(GuiGraphics guiGraphics, Minecraft minecraft, int width, int height, float pulse) {
+		int hotbarX = width / 2 - 91;
+		int hotbarY = height - 22;
+		int alpha = clamp(50 + (int) (pulse * 120.0F), 0, 190);
+		for (int slot = 0; slot < 9; slot++) {
+			ItemStack stack = minecraft.player.getInventory().getItem(slot);
+			if (stack.isEmpty() || !stack.isDamageableItem()) {
+				continue;
+			}
+			int max = Math.max(1, stack.getMaxDamage());
+			int current = max - stack.getDamageValue();
+			float ratio = Math.max(0.05F, Math.min(1.0F, current / (float) max));
+			int fakeLen = Math.max(1, (int) Math.floor(13.0F * ratio * (0.6F + pulse * 0.4F)));
+			int x = hotbarX + slot * 20 + 2;
+			int y = hotbarY + 16;
+			guiGraphics.fill(x, y, x + 13, y + 2, 0x99000000);
+			guiGraphics.fill(x, y, x + fakeLen, y + 2, (alpha << 24) | 0xB00000);
+		}
+	}
+
+	private static int clamp(int value, int min, int max) {
+		return Math.max(min, Math.min(max, value));
 	}
 }
