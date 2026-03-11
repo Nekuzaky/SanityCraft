@@ -12,6 +12,10 @@ Psychological survival horror for Minecraft Java Edition (Fabric).
 SanityCraft introduces a per-player sanity system that reacts to environmental pressure:
 darkness, storms, hostile mobs, and isolation slowly break your mind.
 
+## Download
+- Project page: https://www.curseforge.com/minecraft/mc-mods/sanitycraft
+- Install page: https://www.curseforge.com/minecraft/mc-mods/sanitycraft/install
+
 ## Design Goals
 - Atmosphere over cheap jumpscares
 - Progressive mental breakdown
