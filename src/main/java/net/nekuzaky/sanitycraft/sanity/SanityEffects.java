@@ -41,51 +41,55 @@ public class SanityEffects {
 				player.removeEffect(MobEffects.NAUSEA);
 			}
 		}
-		applyAfflictions(player, stage, config);
+		applyAfflictions(player, component, stage, config, random);
 
-		if (stage == SanityStage.MILD_DISCOMFORT && component.canPlayStrangeSound()) {
+		if (stage == SanityStage.MILD_DISCOMFORT && component.canPlayStrangeSound() && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			HallucinationSoundManager.playStageSound(player, stage, random);
 			component.resetStrangeSoundCooldown(random);
+			SanityManager.debugEvent(player, "stage_sound_mild");
 		}
 
 		if (!config.hallucinationsEnabled) {
 			return;
 		}
 
-		if (stage == SanityStage.UNSTABLE && component.canPlayHallucination()) {
+		if (stage == SanityStage.UNSTABLE && component.canPlayHallucination() && component.tryConsumeHorrorEventBudget(config, random, 2)) {
 			HallucinationSoundManager.playStageSound(player, stage, random);
-			spawnShadowHallucination(level, player, random);
+			spawnShadowHallucination(level, player, random, config);
 			sendWhisper(player, component, random, sanity);
 			component.resetHallucinationCooldown(random);
+			SanityManager.debugEvent(player, "hallucination_unstable");
 		}
 
-		if (stage == SanityStage.SEVERE_BREAKDOWN && component.canSpawnGhost()) {
+		if (stage == SanityStage.SEVERE_BREAKDOWN && component.canSpawnGhost() && component.tryConsumeHorrorEventBudget(config, random, 3)) {
 			HallucinationSoundManager.playStageSound(player, stage, random);
-			spawnBloodHallucination(level, player, random);
-			spawnGhostApparition(level, player, random);
+			spawnBloodHallucination(level, player, random, config);
+			spawnGhostApparition(level, player, random, config);
 			spawnStalkerHallucination(level, player, random, config);
 			spawnBloodyCreeperHallucination(level, player, random, config);
 			player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0, true, false, false));
 			sendWhisper(player, component, random, sanity);
 			component.resetGhostCooldown(random);
+			SanityManager.debugEvent(player, "hallucination_breakdown");
 		}
 
-		if (stage == SanityStage.UNEASY && component.canWhisper() && random.nextFloat() < clamp01(config.uneasyWhisperChance)) {
+		if (stage == SanityStage.UNEASY && component.canWhisper() && random.nextFloat() < clamp01(config.uneasyWhisperChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			sendWhisper(player, component, random, sanity);
+			SanityManager.debugEvent(player, "whisper_uneasy");
 		}
 	}
 
-	private static void spawnShadowHallucination(ServerLevel level, ServerPlayer player, RandomSource random) {
+	private static void spawnShadowHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
 		BlockPos base = randomNearby(player, random, 5.0D, 9.0D);
-		level.sendParticles(player, ParticleTypes.SMOKE, true, false, base.getX() + 0.5D, base.getY() + 0.2D, base.getZ() + 0.5D, 20, 0.5D, 1.0D, 0.5D, 0.01D);
-		level.sendParticles(player, ParticleTypes.WHITE_ASH, true, false, base.getX() + 0.5D, base.getY() + 0.8D, base.getZ() + 0.5D, 8, 0.25D, 0.6D, 0.25D, 0.01D);
+		level.sendParticles(player, ParticleTypes.SMOKE, true, false, base.getX() + 0.5D, base.getY() + 0.2D, base.getZ() + 0.5D, clampParticleCount(config, 20), 0.5D, 1.0D, 0.5D, 0.01D);
+		level.sendParticles(player, ParticleTypes.WHITE_ASH, true, false, base.getX() + 0.5D, base.getY() + 0.8D, base.getZ() + 0.5D, clampParticleCount(config, 8), 0.25D, 0.6D, 0.25D, 0.01D);
 	}
 
-	private static void spawnGhostApparition(ServerLevel level, ServerPlayer player, RandomSource random) {
+	private static void spawnGhostApparition(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
 		BlockPos base = randomNearby(player, random, 6.0D, 11.0D);
-		level.sendParticles(player, ParticleTypes.SOUL, true, false, base.getX() + 0.5D, base.getY() + 0.4D, base.getZ() + 0.5D, 28, 0.6D, 1.2D, 0.6D, 0.02D);
-		level.sendParticles(player, ParticleTypes.SCULK_SOUL, true, false, base.getX() + 0.5D, base.getY() + 1.0D, base.getZ() + 0.5D, 18, 0.45D, 1.4D, 0.45D, 0.02D);
-		level.sendParticles(player, ParticleTypes.SOUL_FIRE_FLAME, true, false, base.getX() + 0.5D, base.getY() + 0.8D, base.getZ() + 0.5D, 10, 0.35D, 0.9D, 0.35D, 0.005D);
+		level.sendParticles(player, ParticleTypes.SOUL, true, false, base.getX() + 0.5D, base.getY() + 0.4D, base.getZ() + 0.5D, clampParticleCount(config, 28), 0.6D, 1.2D, 0.6D, 0.02D);
+		level.sendParticles(player, ParticleTypes.SCULK_SOUL, true, false, base.getX() + 0.5D, base.getY() + 1.0D, base.getZ() + 0.5D, clampParticleCount(config, 18), 0.45D, 1.4D, 0.45D, 0.02D);
+		level.sendParticles(player, ParticleTypes.SOUL_FIRE_FLAME, true, false, base.getX() + 0.5D, base.getY() + 0.8D, base.getZ() + 0.5D, clampParticleCount(config, 10), 0.35D, 0.9D, 0.35D, 0.005D);
 	}
 
 	private static void spawnStalkerHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
@@ -109,6 +113,7 @@ public class SanityEffects {
 		stalker.setTarget(player);
 		level.addFreshEntity(stalker);
 		SanityStalkerHuntDirector.attach(player, stalker, config.stalkerLifetimeSeconds);
+		SanityManager.debugEvent(player, "stalker_spawned");
 	}
 
 	private static void spawnBloodyCreeperHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
@@ -133,6 +138,7 @@ public class SanityEffects {
 		creeper.setTarget(player);
 		creeper.addTag("sanitycraft_hallucination_creeper");
 		level.addFreshEntity(creeper);
+		SanityManager.debugEvent(player, "bloody_creeper_spawned");
 
 		SanitycraftMod.queueServerWork(Math.max(1, config.bloodyCreeperLifetimeSeconds) * 20, () -> {
 			if (creeper.isAlive()) {
@@ -141,7 +147,7 @@ public class SanityEffects {
 		});
 	}
 
-	private static void spawnBloodHallucination(ServerLevel level, ServerPlayer player, RandomSource random) {
+	private static void spawnBloodHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
 		BlockPos base = randomNearby(player, random, 4.0D, 8.0D);
 		SimpleParticleType blood = SanitycraftModParticleTypes.BLOOD;
 		if (blood == null) {
@@ -154,7 +160,7 @@ public class SanityEffects {
 			}
 		}
 		if (blood != null) {
-			level.sendParticles(player, blood, true, false, base.getX() + 0.5D, base.getY() + 0.7D, base.getZ() + 0.5D, 18, 0.35D, 0.35D, 0.35D, 0.01D);
+			level.sendParticles(player, blood, true, false, base.getX() + 0.5D, base.getY() + 0.7D, base.getZ() + 0.5D, clampParticleCount(config, 18), 0.35D, 0.35D, 0.35D, 0.01D);
 		}
 	}
 
@@ -186,17 +192,38 @@ public class SanityEffects {
 		return Math.min(1.0F, value);
 	}
 
-	private static void applyAfflictions(ServerPlayer player, SanityStage stage, SanityConfig config) {
+	private static int clampParticleCount(SanityConfig config, int requested) {
+		return Math.max(1, Math.min(Math.max(1, config.maxDirectedParticlesPerBurst), requested));
+	}
+
+	private static void applyAfflictions(ServerPlayer player, PlayerSanityComponent component, SanityStage stage, SanityConfig config, RandomSource random) {
 		if (!config.sanityAfflictionsEnabled) {
 			return;
 		}
-		if (stage == SanityStage.UNSTABLE) {
+		if (stage == SanityStage.UNEASY) {
+			player.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 50, 0, true, false, false));
+			if (random.nextFloat() < 0.10F) {
+				player.causeFoodExhaustion(0.30F);
+			}
+		} else if (stage == SanityStage.UNSTABLE) {
 			player.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 80, 0, true, false, false));
-			player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 55, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 70, 0, true, false, false));
+			if (random.nextFloat() < 0.22F && component.tryConsumeHorrorEventBudget(config, random, 1)) {
+				SanityNetworking.triggerScarePulse(player, 6, 2);
+				SanityManager.debugEvent(player, "affliction_tremor_unstable");
+			}
+			player.causeFoodExhaustion(0.45F);
 		} else if (stage == SanityStage.SEVERE_BREAKDOWN) {
 			player.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 120, 1, true, false, false));
-			player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 80, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 80, 1, true, false, false));
 			player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, true, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.NAUSEA, 70, 0, true, false, false));
+			if (random.nextFloat() < 0.35F && component.tryConsumeHorrorEventBudget(config, random, 1)) {
+				SanityNetworking.triggerScarePulse(player, 9, 3);
+				SanityManager.debugEvent(player, "affliction_tremor_breakdown");
+			}
+			player.causeFoodExhaustion(0.65F);
 		}
 	}
 }

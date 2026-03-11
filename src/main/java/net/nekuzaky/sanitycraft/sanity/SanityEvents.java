@@ -42,6 +42,8 @@ public class SanityEvents {
 			SanityPersistence.set(handler.player, SanityManager.get(handler.player).getSanity());
 			SanityJournal.clear(handler.player);
 			SanityFractureQuestDirector.clear(handler.player);
+			SanityDebugState.clear(handler.player);
+			SanityNetworking.clearRateState(handler.player);
 			SanityManager.remove(handler.player);
 		});
 		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {

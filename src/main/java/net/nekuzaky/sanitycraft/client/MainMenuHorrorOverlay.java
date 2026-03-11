@@ -1,7 +1,6 @@
 package net.nekuzaky.sanitycraft.client;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -20,25 +19,21 @@ public class MainMenuHorrorOverlay {
 		}
 		registered = true;
 
-		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-			if (!(screen instanceof TitleScreen)) {
-				return;
-			}
-			ScreenEvents.afterRender(screen).register((current, guiGraphics, mouseX, mouseY, deltaTracker) -> renderOverlay(guiGraphics));
-		});
-
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (client.getWindow() == null || client.screen == null) {
 				return;
 			}
-			if (!(client.screen instanceof TitleScreen)) {
+			if (client.screen.getClass() == TitleScreen.class) {
+				client.setScreen(new SanitycraftTitleScreen());
 				return;
 			}
-			client.getWindow().setTitle(WINDOW_TITLE);
+			if (client.screen instanceof SanitycraftTitleScreen) {
+				client.getWindow().setTitle(WINDOW_TITLE);
+			}
 		});
 	}
 
-	private static void renderOverlay(GuiGraphics guiGraphics) {
+	public static void renderOverlay(GuiGraphics guiGraphics) {
 		int width = guiGraphics.guiWidth();
 		int height = guiGraphics.guiHeight();
 		long time = System.currentTimeMillis();

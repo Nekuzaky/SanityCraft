@@ -1,8 +1,8 @@
 ﻿# SanityCraft
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.8-3C8527?style=for-the-badge)
-![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4?style=for-the-badge)
-![Fabric API](https://img.shields.io/badge/Fabric_API-0.133.4%2B1.21.8-DBD0B4?style=for-the-badge)
+![Fabric](https://img.shields.io/badge/Loader-Fabric-AEC9C1?style=for-the-badge)
+![Fabric API](https://img.shields.io/badge/Fabric_API-0.133.4%2B1.21.8-AEC9C1?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge)
 ![MCreator](https://img.shields.io/badge/Workflow-MCreator--First-4B6CB7?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
@@ -50,6 +50,11 @@ darkness, storms, hostile mobs, and isolation slowly break your mind.
   - directional sound traps
   - rare near-miss events (behind-you sprint cues + 0.3s edge silhouette)
   - rare cave miner hallucinations (multi-hit stone-breaking sequence)
+- Stability/performance guard rails:
+  - global horror-event anti-spam cooldown
+  - per-minute horror event budget
+  - packet limiter for jumpscare/scare-pulse networking
+  - particle burst clamping
 - Contextual ambient fog:
   - cave/night/weather pressure
   - torches repel fog
@@ -66,6 +71,11 @@ darkness, storms, hostile mobs, and isolation slowly break your mind.
   - `/sanity journal` and `/sanity journal clear`
 - Ritual Safe Zones:
   - torch circle + Pill in hand stabilizes sanity
+  - V2 aura feedback (subtle particles + calm pulse sound)
+- Sanity Afflictions V1:
+  - short breath pressure (light exhaustion pulses)
+  - light tremor cues
+  - soft disorientation/slowdown by low-sanity stages
 - Nightmare Sleep Events:
   - low-sanity sleep can trigger replayable nightmare outcomes
   - safer sleep gives minor recovery
@@ -152,6 +162,9 @@ Main options include:
 - ambient fog tuning
 - torch fog-repel and torch-hand-light tuning
 - zero-sanity death toggle and delay seconds
+- horror anti-spam budget and cooldown settings
+- packet limiter settings for hallucination effects
+- directed particle cap per event burst
 - ritual safe zone tuning
 - nightmare sleep tuning
 - paranoia mimic sound tuning
@@ -167,6 +180,7 @@ Requires permission level 2 (operator).
 - `/sanity add <delta>`
 - `/sanity reloadconfig`
 - `/sanity profile <light|medium|hardcore|custom>`
+- `/sanity debug <on|off|status>`
 - `/sanity journal`
 - `/sanity journal clear`
 

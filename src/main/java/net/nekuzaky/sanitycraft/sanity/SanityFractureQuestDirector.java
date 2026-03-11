@@ -37,6 +37,7 @@ public class SanityFractureQuestDirector {
 				state.spawnCooldown = random.nextIntBetweenInclusive(900, 1800);
 				sendQuestStart(player, state.type);
 				SanityJournal.log(player, "A strange objective formed in my head.");
+				SanityManager.debugEvent(player, "fracture_quest_start_" + state.type.name().toLowerCase());
 			}
 			return;
 		}
@@ -69,6 +70,7 @@ public class SanityFractureQuestDirector {
 		SanityManager.addSanity(player, Math.max(1, config.fractureQuestReward));
 		player.displayClientMessage(Component.literal("Fracture objective complete. Sanity restored."), true);
 		SanityJournal.log(player, journalLine);
+		SanityManager.debugEvent(player, "fracture_quest_complete");
 		state.type = QuestType.NONE;
 		state.progressTicks = 0;
 	}

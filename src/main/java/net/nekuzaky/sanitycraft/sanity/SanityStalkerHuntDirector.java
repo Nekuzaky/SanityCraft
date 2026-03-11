@@ -30,6 +30,8 @@ public class SanityStalkerHuntDirector {
 
 	public static void tick(ServerPlayer player) {
 		int sanity = SanityManager.get(player).getSanity();
+		PlayerSanityComponent component = SanityManager.get(player);
+		SanityConfig config = SanityManager.getConfig();
 		RandomSource random = player.getRandom();
 
 		STATES.entrySet().removeIf(entry -> {
@@ -57,13 +59,21 @@ public class SanityStalkerHuntDirector {
 
 			if (--state.teleportCooldown <= 0) {
 				state.teleportCooldown = random.nextIntBetweenInclusive(35, 70);
-				teleportNearPlayer(stalker, player, random, false);
+				boolean showFx = component.tryConsumeHorrorEventBudget(config, random, 1);
+				teleportNearPlayer(stalker, player, random, false, showFx, config);
+				if (showFx) {
+					SanityManager.debugEvent(player, "stalker_reposition");
+				}
 			}
 
 			if (isPlayerLookingAt(player, stalker)) {
 				state.observeCooldown = random.nextIntBetweenInclusive(26, 50);
 				stalker.setInvisible(true);
-				teleportNearPlayer(stalker, player, random, true);
+				boolean showFx = component.tryConsumeHorrorEventBudget(config, random, 1);
+				teleportNearPlayer(stalker, player, random, true, showFx, config);
+				if (showFx) {
+					SanityManager.debugEvent(player, "stalker_flank_teleport");
+				}
 			} else if (state.observeCooldown > 0) {
 				state.observeCooldown--;
 				if (state.observeCooldown <= 0) {
@@ -75,10 +85,13 @@ public class SanityStalkerHuntDirector {
 				state.phaseCooldown = random.nextIntBetweenInclusive(24, 50);
 				boolean nowInvisible = !stalker.isInvisible();
 				stalker.setInvisible(nowInvisible);
-				if (nowInvisible) {
-					player.playNotifySound(SoundEvents.ENDERMAN_AMBIENT, SoundSource.HOSTILE, 0.6F, 0.7F + random.nextFloat() * 0.25F);
-				} else {
-					player.playNotifySound(SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 0.8F, 0.85F + random.nextFloat() * 0.2F);
+				if (component.tryConsumeHorrorEventBudget(config, random, 1)) {
+					if (nowInvisible) {
+						player.playNotifySound(SoundEvents.ENDERMAN_AMBIENT, SoundSource.HOSTILE, 0.6F, 0.7F + random.nextFloat() * 0.25F);
+					} else {
+						player.playNotifySound(SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 0.8F, 0.85F + random.nextFloat() * 0.2F);
+					}
+					SanityManager.debugEvent(player, "stalker_phase");
 				}
 			}
 
@@ -94,7 +107,7 @@ public class SanityStalkerHuntDirector {
 		return player.level().getEntitiesOfClass(StalkerEntity.class, player.getBoundingBox().inflate(96.0D), e -> e.getUUID().equals(id)).stream().findFirst().orElse(null);
 	}
 
-	private static void teleportNearPlayer(StalkerEntity stalker, ServerPlayer player, RandomSource random, boolean flank) {
+	private static void teleportNearPlayer(StalkerEntity stalker, ServerPlayer player, RandomSource random, boolean flank, boolean showEffects, SanityConfig config) {
 		double angle;
 		double dist;
 		if (flank) {
@@ -110,7 +123,10 @@ public class SanityStalkerHuntDirector {
 		double z = player.getZ() + Math.sin(angle) * dist;
 		double y = player.getY();
 		stalker.teleportTo(x, y, z);
-		player.level().sendParticles(player, ParticleTypes.SMOKE, true, false, x, y + 1.0D, z, 14, 0.3D, 0.6D, 0.3D, 0.01D);
+		if (showEffects) {
+			int particles = Math.max(1, Math.min(Math.max(1, config.maxDirectedParticlesPerBurst), 14));
+			player.level().sendParticles(player, ParticleTypes.SMOKE, true, false, x, y + 1.0D, z, particles, 0.3D, 0.6D, 0.3D, 0.01D);
+		}
 	}
 
 	private static boolean isPlayerLookingAt(ServerPlayer player, StalkerEntity stalker) {

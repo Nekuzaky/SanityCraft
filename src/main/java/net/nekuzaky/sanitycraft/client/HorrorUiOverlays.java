@@ -18,6 +18,7 @@ import net.nekuzaky.sanitycraft.sanity.SanityManager;
 public class HorrorUiOverlays {
 	private static long lastTorchScanMs = 0L;
 	private static float cachedTorchRepel = 0.0F;
+	private static float smoothedAmbientFogAlpha = 0.0F;
 	private static long nextLootCorruptionMs = 0L;
 
 	private HorrorUiOverlays() {
@@ -62,56 +63,63 @@ public class HorrorUiOverlays {
 	private static void renderAmbientFog(GuiGraphics guiGraphics, int sanity, int width, int height) {
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.level == null) {
+			smoothedAmbientFogAlpha = 0.0F;
 			return;
 		}
 		SanityConfig config = SanityManager.getConfig();
 		if (!config.ambientFogEnabled) {
+			smoothedAmbientFogAlpha = 0.0F;
 			return;
 		}
 
 		float fearRatio = Math.max(0.0F, Math.min(1.0F, (100.0F - sanity) / 100.0F));
+		float dreadStyle = config.dreadFogEnabled ? clamp01(config.dreadFogIntensity) : 0.0F;
 		float weatherBoost = minecraft.level.isRaining() ? 0.12F : 0.0F;
 		float stormBoost = minecraft.level.isThundering() ? 0.10F : 0.0F;
-		float density = Math.min(1.0F, fearRatio + weatherBoost + stormBoost);
+		float styleBoost = dreadStyle * 0.22F;
+		float density = Math.min(1.0F, fearRatio + weatherBoost + stormBoost + styleBoost);
 		int baseAlpha = clamp(config.ambientFogBaseAlpha, 0, 120);
 		int maxAlpha = Math.max(baseAlpha, clamp(config.ambientFogMaxAlpha, 0, 160));
-		int alpha = clamp(baseAlpha + (int) ((maxAlpha - baseAlpha) * density), 0, 170);
+		int alpha = clamp(baseAlpha + (int) ((maxAlpha - baseAlpha) * density) + (int) (dreadStyle * 14.0F), 0, 180);
 
 		LocalPlayer player = minecraft.player;
 		if (player != null && config.cinematicCaveFogEnabled && sanity < 40 && isCaveLike(player)) {
 			alpha = clamp(alpha + Math.max(0, config.cinematicCaveFogBonusAlpha), 0, 180);
 		}
+		if (player != null && dreadStyle > 0.0F && isForestLikeBiome(player)) {
+			alpha = clamp(alpha + (int) (10.0F * dreadStyle), 0, 185);
+		}
 		if (config.torchRepelsFog) {
 			float repel = computeTorchRepel(player, config);
 			alpha = clamp((int) (alpha * (1.0F - repel)), 0, 180);
 		}
-		if (alpha <= 0) {
+		smoothedAmbientFogAlpha += (alpha - smoothedAmbientFogAlpha) * 0.08F;
+		alpha = clamp((int) smoothedAmbientFogAlpha, 0, 180);
+		if (alpha <= 1) {
 			return;
 		}
+
+		int topColor = blendRgb(0x1A1C20, 0xAEBABE, dreadStyle);
+		int bottomColor = blendRgb(0x17191D, 0x9EAAAE, dreadStyle);
+		int midColor = blendRgb(0x1B1E23, 0xB8C3C7, dreadStyle);
 
 		int topHeight = Math.max(24, (int) (height * 0.32F));
 		int bottomStart = (int) (height * 0.68F);
 		for (int i = 0; i < topHeight; i++) {
 			float t = i / (float) Math.max(1, topHeight);
 			int lineAlpha = (int) (alpha * (1.0F - t));
-			guiGraphics.fill(0, i, width, i + 1, (lineAlpha << 24) | 0x1A1C20);
+			guiGraphics.fill(0, i, width, i + 1, (lineAlpha << 24) | topColor);
 		}
 		for (int i = 0; i < height - bottomStart; i++) {
 			float t = i / (float) Math.max(1, height - bottomStart);
 			int lineAlpha = (int) (alpha * (1.0F - t));
 			int y = height - i - 1;
-			guiGraphics.fill(0, y, width, y + 1, (lineAlpha << 24) | 0x17191D);
+			guiGraphics.fill(0, y, width, y + 1, (lineAlpha << 24) | bottomColor);
 		}
 
 		long time = System.currentTimeMillis();
-		int drift = (int) ((Math.sin(time / 850.0D) + 1.0D) * 0.5D * 30.0D);
-		int midAlpha = (int) (alpha * 0.30F);
-		for (int y = 16; y < height - 16; y += 14) {
-			int xOffset = (int) (Math.sin((time / 620.0D) + (y * 0.07D)) * drift);
-			int left = Math.max(0, xOffset - 20);
-			int right = Math.min(width, width + xOffset + 20);
-			guiGraphics.fill(left, y, right, y + 2, (midAlpha << 24) | 0x1B1E23);
-		}
+		int cloudAlpha = (int) (alpha * (0.22F + dreadStyle * 0.08F));
+		renderSoftFogLayer(guiGraphics, width, height, time, cloudAlpha, midColor, dreadStyle);
 	}
 
 	private static void renderHeartbeatPressure(GuiGraphics guiGraphics, int sanity, int width, int height) {
@@ -288,6 +296,13 @@ public class HorrorUiOverlays {
 		return !player.level().canSeeSky(pos) && pos.getY() < player.level().getSeaLevel() + 2;
 	}
 
+	private static boolean isForestLikeBiome(LocalPlayer player) {
+		return player.level().getBiome(player.blockPosition()).unwrapKey().map(key -> {
+			String path = key.location().getPath();
+			return path.contains("forest") || path.contains("taiga") || path.contains("swamp") || path.contains("dark_forest");
+		}).orElse(false);
+	}
+
 	private static float computeTorchRepel(LocalPlayer player, SanityConfig config) {
 		if (player == null || player.level() == null) {
 			return 0.0F;
@@ -337,6 +352,49 @@ public class HorrorUiOverlays {
 
 	private static float clamp01(float value) {
 		return Math.max(0.0F, Math.min(1.0F, value));
+	}
+
+	private static void renderSoftFogLayer(GuiGraphics guiGraphics, int width, int height, long time, int alpha, int color, float style) {
+		if (alpha <= 0) {
+			return;
+		}
+		int layers = style > 0.45F ? 4 : 3;
+		for (int i = 0; i < layers; i++) {
+			float wave = (float) Math.sin((time / (1400.0D + i * 260.0D)) + i * 1.37D);
+			int centerY = (int) (height * (0.24F + i * 0.18F) + wave * (8.0F + i * 3.0F));
+			int bandHeight = (int) (height * (0.10F + i * 0.015F));
+			int layerAlpha = Math.max(1, (int) (alpha * (0.70F - i * 0.14F)));
+			renderSoftHorizontalBand(guiGraphics, width, height, centerY, bandHeight, layerAlpha, color);
+		}
+	}
+
+	private static void renderSoftHorizontalBand(GuiGraphics guiGraphics, int width, int height, int centerY, int bandHeight, int alpha, int color) {
+		int half = Math.max(4, bandHeight / 2);
+		int start = Math.max(0, centerY - half);
+		int end = Math.min(height, centerY + half);
+		for (int y = start; y < end; y++) {
+			float distance = Math.abs((y - centerY) / (float) half);
+			float falloff = 1.0F - distance * distance;
+			if (falloff <= 0.0F) {
+				continue;
+			}
+			int lineAlpha = Math.max(1, (int) (alpha * falloff));
+			guiGraphics.fill(0, y, width, y + 1, (lineAlpha << 24) | color);
+		}
+	}
+
+	private static int blendRgb(int from, int to, float t) {
+		float clamped = clamp01(t);
+		int fr = (from >> 16) & 0xFF;
+		int fg = (from >> 8) & 0xFF;
+		int fb = from & 0xFF;
+		int tr = (to >> 16) & 0xFF;
+		int tg = (to >> 8) & 0xFF;
+		int tb = to & 0xFF;
+		int r = (int) (fr + (tr - fr) * clamped);
+		int g = (int) (fg + (tg - fg) * clamped);
+		int b = (int) (fb + (tb - fb) * clamped);
+		return (r << 16) | (g << 8) | b;
 	}
 
 	private static void triggerCorruptedLootMoment(int sanity) {

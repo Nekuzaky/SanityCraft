@@ -1,8 +1,11 @@
 package net.nekuzaky.sanitycraft.sanity;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -14,28 +17,13 @@ public class SanityDebugCommands {
 		CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) -> dispatcher.register(
 				Commands.literal("sanity")
 						.requires(source -> source.hasPermission(2))
-						.executes(ctx -> {
-							ServerPlayer player = ctx.getSource().getPlayerOrException();
-							int sanity = SanityManager.get(player).getSanity();
-							SanityStage stage = SanityStageResolver.resolve(sanity);
-							ctx.getSource().sendSuccess(() -> Component.literal("Sanity: " + sanity + " (" + stage + ")"), false);
-							return 1;
-						})
+						.executes(ctx -> showSanity(ctx.getSource().getPlayerOrException(), ctx.getSource()))
 						.then(Commands.literal("get")
-								.executes(ctx -> {
-									ServerPlayer player = ctx.getSource().getPlayerOrException();
-									int sanity = SanityManager.get(player).getSanity();
-									SanityStage stage = SanityStageResolver.resolve(sanity);
-									ctx.getSource().sendSuccess(() -> Component.literal("Sanity: " + sanity + " (" + stage + ")"), false);
-									return 1;
-								})
-								.then(Commands.argument("target", net.minecraft.commands.arguments.EntityArgument.player())
+								.executes(ctx -> showSanity(ctx.getSource().getPlayerOrException(), ctx.getSource()))
+								.then(Commands.argument("target", EntityArgument.player())
 										.executes(ctx -> {
-											ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "target");
-											int sanity = SanityManager.get(target).getSanity();
-											SanityStage stage = SanityStageResolver.resolve(sanity);
-											ctx.getSource().sendSuccess(() -> Component.literal(target.getName().getString() + " sanity: " + sanity + " (" + stage + ")"), false);
-											return 1;
+											ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+											return showSanity(target, ctx.getSource());
 										})))
 						.then(Commands.literal("set")
 								.then(Commands.argument("value", IntegerArgumentType.integer(PlayerSanityComponent.MIN_SANITY, PlayerSanityComponent.MAX_SANITY))
@@ -46,10 +34,10 @@ public class SanityDebugCommands {
 											ctx.getSource().sendSuccess(() -> Component.literal("Set sanity to " + value), true);
 											return 1;
 										})
-										.then(Commands.argument("target", net.minecraft.commands.arguments.EntityArgument.player())
+										.then(Commands.argument("target", EntityArgument.player())
 												.executes(ctx -> {
 													int value = IntegerArgumentType.getInteger(ctx, "value");
-													ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "target");
+													ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
 													SanityManager.setSanity(target, value);
 													ctx.getSource().sendSuccess(() -> Component.literal("Set " + target.getName().getString() + " sanity to " + value), true);
 													return 1;
@@ -94,15 +82,53 @@ public class SanityDebugCommands {
 											SanityJournal.clear(player);
 											ctx.getSource().sendSuccess(() -> Component.literal("Journal cleared."), true);
 											return 1;
-										})))));
+										})))
+						.then(Commands.literal("debug")
+								.executes(ctx -> debugStatus(ctx.getSource().getPlayerOrException(), ctx.getSource()))
+								.then(Commands.literal("status")
+										.executes(ctx -> debugStatus(ctx.getSource().getPlayerOrException(), ctx.getSource())))
+								.then(Commands.literal("on")
+										.executes(ctx -> setDebug(ctx.getSource().getPlayerOrException(), ctx.getSource(), true)))
+								.then(Commands.literal("off")
+										.executes(ctx -> setDebug(ctx.getSource().getPlayerOrException(), ctx.getSource(), false))))));
 	}
 
-	private static int setProfile(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> ctx, String profile) {
+	private static int showSanity(ServerPlayer target, CommandSourceStack source) {
+		int sanity = SanityManager.get(target).getSanity();
+		SanityStage stage = SanityStageResolver.resolve(sanity);
+		String owner = source.getEntity() == target ? "Sanity" : target.getName().getString() + " sanity";
+		source.sendSuccess(() -> Component.literal(owner + ": " + sanity + " (" + stage + ")"), false);
+		return 1;
+	}
+
+	private static int setProfile(CommandContext<CommandSourceStack> ctx, String profile) {
 		if (!SanityManager.applyProfile(profile)) {
 			ctx.getSource().sendFailure(Component.literal("Invalid profile."));
 			return 0;
 		}
 		ctx.getSource().sendSuccess(() -> Component.literal("Applied sanity profile: " + profile), true);
+		return 1;
+	}
+
+	private static int setDebug(ServerPlayer player, CommandSourceStack source, boolean enabled) {
+		if (enabled) {
+			SanityDebugState.enable(player);
+			source.sendSuccess(() -> Component.literal("Sanity debug enabled."), true);
+		} else {
+			SanityDebugState.disable(player);
+			source.sendSuccess(() -> Component.literal("Sanity debug disabled."), true);
+		}
+		return debugStatus(player, source);
+	}
+
+	private static int debugStatus(ServerPlayer player, CommandSourceStack source) {
+		PlayerSanityComponent component = SanityManager.get(player);
+		SanityConfig config = SanityManager.getConfig();
+		source.sendSuccess(() -> Component.literal("Debug: " + (SanityDebugState.isEnabled(player) ? "ON" : "OFF")), false);
+		source.sendSuccess(() -> Component.literal(
+				"Event budget: " + component.getHorrorEventsInWindow() + "/" + Math.max(1, config.horrorEventsPerMinute) + " | globalCooldown=" + component.getHorrorGlobalCooldown() + " ticks"),
+				false);
+		source.sendSuccess(() -> Component.literal("Window reset in " + component.getHorrorWindowTicksRemaining() + " ticks"), false);
 		return 1;
 	}
 }

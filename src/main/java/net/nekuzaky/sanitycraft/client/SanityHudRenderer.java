@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
+import net.nekuzaky.sanitycraft.init.SanitycraftModItems;
 
 public class SanityHudRenderer {
 	private SanityHudRenderer() {
@@ -21,22 +22,25 @@ public class SanityHudRenderer {
 		}
 
 		int sanity = SanityClientState.getSanity();
-		int barWidth = 88;
+		int iconSize = 16;
+		int iconX = 8;
+		int iconY = 5;
+		int barWidth = 82;
 		int barHeight = 5;
-		int x = 8;
+		int x = iconX + iconSize + 6;
 		int y = 8;
 
 		int fill = (int) Math.round((sanity / 100.0D) * barWidth);
 		int color = getColor(sanity);
 		int jitter = sanity <= 20 ? (int) ((Math.sin(System.currentTimeMillis() / 70.0D)) * 1.0D) : 0;
 
+		renderPillBadge(guiGraphics, iconX + jitter, iconY + jitter);
 		renderMetalContainer(guiGraphics, x + jitter, y + jitter, barWidth, barHeight);
 		renderMetalFill(guiGraphics, x + jitter, y + jitter, fill, barHeight, color);
 
 		Font font = minecraft.font;
-		guiGraphics.drawString(font, "S:" + sanity, x + barWidth + 6 + jitter, y - 1 + jitter, 0xD0C8C8C8, false);
 		if (sanity <= 40) {
-			guiGraphics.drawString(font, getStageLabel(sanity), x + 2 + jitter, y + barHeight + 3 + jitter, 0xCFC49D9D, false);
+			guiGraphics.drawString(font, getStageLabel(sanity), x + 2 + jitter, y + barHeight + 3 + jitter, 0xCF9EA6AF, false);
 		}
 		if (SanityClientState.isZeroSanityActive()) {
 			renderZeroSanityHudGlitch(guiGraphics, minecraft, sanity);
@@ -46,18 +50,18 @@ public class SanityHudRenderer {
 
 	private static int getColor(int sanity) {
 		if (sanity > 80) {
-			return 0xFF59D665;
+			return 0xFFD9DEE4;
 		}
 		if (sanity > 60) {
-			return 0xFFE3D15C;
+			return 0xFFBEC5CE;
 		}
 		if (sanity > 40) {
-			return 0xFFE39E5C;
+			return 0xFFA0A7B0;
 		}
 		if (sanity > 20) {
-			return 0xFFE06A6A;
+			return 0xFF7E858F;
 		}
-		return 0xFFA43A3A;
+		return 0xFF5F656E;
 	}
 
 	private static String getStageLabel(int sanity) {
@@ -110,6 +114,28 @@ public class SanityHudRenderer {
 
 		int shineX = x + (int) ((System.currentTimeMillis() / 18L) % Math.max(2, clamped + 10)) - 10;
 		guiGraphics.fill(shineX, y, shineX + 2, y + height, 0x55FFFFFF);
+	}
+
+	private static void renderPillBadge(GuiGraphics guiGraphics, int x, int y) {
+		guiGraphics.fill(x - 2, y - 2, x + 18, y + 18, 0x64080808);
+		guiGraphics.fill(x - 1, y - 1, x + 17, y + 17, 0xB6484D55);
+		guiGraphics.fill(x, y, x + 16, y + 16, 0xC1202328);
+		guiGraphics.fill(x + 1, y + 1, x + 15, y + 2, 0x55FFFFFF);
+
+		if (SanitycraftModItems.PILL != null) {
+			try {
+				// Pill texture is currently portrait (1024x1536), so we draw with aspect compensation
+				// to avoid visible horizontal stretch in a 16x16 HUD slot.
+				float scaleX = 0.67F;
+				float drawOffsetX = (16.0F - 16.0F * scaleX) * 0.5F;
+				guiGraphics.pose().pushMatrix();
+				guiGraphics.pose().translate(x + drawOffsetX, y);
+				guiGraphics.pose().scale(scaleX, 1.0F);
+				guiGraphics.renderItem(new ItemStack(SanitycraftModItems.PILL), 0, 0);
+				guiGraphics.pose().popMatrix();
+			} catch (Exception ignored) {
+			}
+		}
 	}
 
 	private static void renderZeroSanityHudGlitch(GuiGraphics guiGraphics, Minecraft minecraft, int sanity) {

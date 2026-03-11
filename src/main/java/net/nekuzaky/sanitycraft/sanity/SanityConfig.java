@@ -16,6 +16,12 @@ public class SanityConfig {
 
 	public int updateIntervalSeconds = 5;
 	public int sanityOnRespawnAfterDeath = 100;
+	public int horrorEventsPerMinute = 14;
+	public int horrorGlobalCooldownMinTicks = 18;
+	public int horrorGlobalCooldownMaxTicks = 52;
+	public int maxDirectedParticlesPerBurst = 24;
+	public int networkEffectPacketsPerMinute = 30;
+	public int networkEffectMinSpacingTicks = 4;
 
 	public int darknessLoss = 2;
 	public int caveLoss = 1;
@@ -43,6 +49,9 @@ public class SanityConfig {
 	public boolean ambientFogEnabled = true;
 	public int ambientFogBaseAlpha = 8;
 	public int ambientFogMaxAlpha = 42;
+	public boolean dreadFogEnabled = true;
+	public float dreadFogIntensity = 0.85F;
+	public boolean dreadFogNightBoost = true;
 	public boolean cinematicCaveFogEnabled = true;
 	public int cinematicCaveFogBonusAlpha = 16;
 	public boolean torchRepelsFog = true;
@@ -123,6 +132,12 @@ public class SanityConfig {
 			JsonObject object = new JsonParser().parse(json).getAsJsonObject();
 			config.updateIntervalSeconds = readInt(object, "updateIntervalSeconds", config.updateIntervalSeconds);
 			config.sanityOnRespawnAfterDeath = readInt(object, "sanityOnRespawnAfterDeath", config.sanityOnRespawnAfterDeath);
+			config.horrorEventsPerMinute = readInt(object, "horrorEventsPerMinute", config.horrorEventsPerMinute);
+			config.horrorGlobalCooldownMinTicks = readInt(object, "horrorGlobalCooldownMinTicks", config.horrorGlobalCooldownMinTicks);
+			config.horrorGlobalCooldownMaxTicks = readInt(object, "horrorGlobalCooldownMaxTicks", config.horrorGlobalCooldownMaxTicks);
+			config.maxDirectedParticlesPerBurst = readInt(object, "maxDirectedParticlesPerBurst", config.maxDirectedParticlesPerBurst);
+			config.networkEffectPacketsPerMinute = readInt(object, "networkEffectPacketsPerMinute", config.networkEffectPacketsPerMinute);
+			config.networkEffectMinSpacingTicks = readInt(object, "networkEffectMinSpacingTicks", config.networkEffectMinSpacingTicks);
 			config.darknessLoss = readInt(object, "darknessLoss", config.darknessLoss);
 			config.caveLoss = readInt(object, "caveLoss", config.caveLoss);
 			config.hostileLoss = readInt(object, "hostileLoss", config.hostileLoss);
@@ -147,6 +162,9 @@ public class SanityConfig {
 			config.ambientFogEnabled = readBoolean(object, "ambientFogEnabled", config.ambientFogEnabled);
 			config.ambientFogBaseAlpha = readInt(object, "ambientFogBaseAlpha", config.ambientFogBaseAlpha);
 			config.ambientFogMaxAlpha = readInt(object, "ambientFogMaxAlpha", config.ambientFogMaxAlpha);
+			config.dreadFogEnabled = readBoolean(object, "dreadFogEnabled", config.dreadFogEnabled);
+			config.dreadFogIntensity = readFloat(object, "dreadFogIntensity", config.dreadFogIntensity);
+			config.dreadFogNightBoost = readBoolean(object, "dreadFogNightBoost", config.dreadFogNightBoost);
 			config.cinematicCaveFogEnabled = readBoolean(object, "cinematicCaveFogEnabled", config.cinematicCaveFogEnabled);
 			config.cinematicCaveFogBonusAlpha = readInt(object, "cinematicCaveFogBonusAlpha", config.cinematicCaveFogBonusAlpha);
 			config.torchRepelsFog = readBoolean(object, "torchRepelsFog", config.torchRepelsFog);
@@ -236,6 +254,12 @@ public class SanityConfig {
 		JsonObject object = new JsonObject();
 		object.addProperty("updateIntervalSeconds", updateIntervalSeconds);
 		object.addProperty("sanityOnRespawnAfterDeath", sanityOnRespawnAfterDeath);
+		object.addProperty("horrorEventsPerMinute", horrorEventsPerMinute);
+		object.addProperty("horrorGlobalCooldownMinTicks", horrorGlobalCooldownMinTicks);
+		object.addProperty("horrorGlobalCooldownMaxTicks", horrorGlobalCooldownMaxTicks);
+		object.addProperty("maxDirectedParticlesPerBurst", maxDirectedParticlesPerBurst);
+		object.addProperty("networkEffectPacketsPerMinute", networkEffectPacketsPerMinute);
+		object.addProperty("networkEffectMinSpacingTicks", networkEffectMinSpacingTicks);
 		object.addProperty("darknessLoss", darknessLoss);
 		object.addProperty("caveLoss", caveLoss);
 		object.addProperty("hostileLoss", hostileLoss);
@@ -260,6 +284,9 @@ public class SanityConfig {
 		object.addProperty("ambientFogEnabled", ambientFogEnabled);
 		object.addProperty("ambientFogBaseAlpha", ambientFogBaseAlpha);
 		object.addProperty("ambientFogMaxAlpha", ambientFogMaxAlpha);
+		object.addProperty("dreadFogEnabled", dreadFogEnabled);
+		object.addProperty("dreadFogIntensity", dreadFogIntensity);
+		object.addProperty("dreadFogNightBoost", dreadFogNightBoost);
 		object.addProperty("cinematicCaveFogEnabled", cinematicCaveFogEnabled);
 		object.addProperty("cinematicCaveFogBonusAlpha", cinematicCaveFogBonusAlpha);
 		object.addProperty("torchRepelsFog", torchRepelsFog);
@@ -342,8 +369,21 @@ public class SanityConfig {
 			villageGain = 3;
 			lightGain = 3;
 			musicGain = 4;
+			nightDecayMultiplier = 1.05F;
+			rainDecayMultiplier = 1.05F;
+			undergroundDecayMultiplier = 1.10F;
+			horrorEventsPerMinute = 10;
+			horrorGlobalCooldownMinTicks = 24;
+			horrorGlobalCooldownMaxTicks = 60;
+			maxDirectedParticlesPerBurst = 16;
+			networkEffectPacketsPerMinute = 22;
+			networkEffectMinSpacingTicks = 5;
 			stalkerSpawnChancePercent = 20;
 			bloodyCreeperSpawnChancePercent = 10;
+			nearMissMinIntervalTicks = 2600;
+			nearMissMaxIntervalTicks = 6200;
+			caveMiningMinIntervalTicks = 3600;
+			caveMiningMaxIntervalTicks = 8600;
 		} else if ("medium".equals(profile)) {
 			updateIntervalSeconds = 4;
 			darknessLoss = 2;
@@ -356,8 +396,21 @@ public class SanityConfig {
 			villageGain = 2;
 			lightGain = 2;
 			musicGain = 3;
+			nightDecayMultiplier = 1.15F;
+			rainDecayMultiplier = 1.10F;
+			undergroundDecayMultiplier = 1.25F;
+			horrorEventsPerMinute = 14;
+			horrorGlobalCooldownMinTicks = 18;
+			horrorGlobalCooldownMaxTicks = 52;
+			maxDirectedParticlesPerBurst = 24;
+			networkEffectPacketsPerMinute = 30;
+			networkEffectMinSpacingTicks = 4;
 			stalkerSpawnChancePercent = 35;
 			bloodyCreeperSpawnChancePercent = 20;
+			nearMissMinIntervalTicks = 1800;
+			nearMissMaxIntervalTicks = 5200;
+			caveMiningMinIntervalTicks = 2600;
+			caveMiningMaxIntervalTicks = 7600;
 		} else if ("hardcore".equals(profile)) {
 			updateIntervalSeconds = 3;
 			darknessLoss = 3;
@@ -370,8 +423,21 @@ public class SanityConfig {
 			villageGain = 1;
 			lightGain = 1;
 			musicGain = 2;
+			nightDecayMultiplier = 1.25F;
+			rainDecayMultiplier = 1.20F;
+			undergroundDecayMultiplier = 1.35F;
+			horrorEventsPerMinute = 18;
+			horrorGlobalCooldownMinTicks = 14;
+			horrorGlobalCooldownMaxTicks = 38;
+			maxDirectedParticlesPerBurst = 32;
+			networkEffectPacketsPerMinute = 38;
+			networkEffectMinSpacingTicks = 3;
 			stalkerSpawnChancePercent = 55;
 			bloodyCreeperSpawnChancePercent = 33;
+			nearMissMinIntervalTicks = 1200;
+			nearMissMaxIntervalTicks = 3400;
+			caveMiningMinIntervalTicks = 1800;
+			caveMiningMaxIntervalTicks = 5200;
 		}
 	}
 

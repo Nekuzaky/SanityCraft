@@ -19,7 +19,12 @@ public class PlayerSanityComponent {
 	private int journalCooldown = 0;
 	private int falseUiCooldown = 0;
 	private int lootCorruptionCooldown = 0;
+	private int horrorGlobalCooldown = 0;
+	private int horrorWindowTicks = 20 * 60;
+	private int horrorEventsInWindow = 0;
+	private int ritualFeedbackCooldown = 0;
 	private boolean sleepingLastTick = false;
+	private boolean ritualSafeZoneLastTick = false;
 	private int zeroSanityTicks = 0;
 	private int hallucinationShieldTicks = 0;
 
@@ -72,6 +77,17 @@ public class PlayerSanityComponent {
 		}
 		if (lootCorruptionCooldown > 0) {
 			lootCorruptionCooldown--;
+		}
+		if (horrorGlobalCooldown > 0) {
+			horrorGlobalCooldown--;
+		}
+		if (ritualFeedbackCooldown > 0) {
+			ritualFeedbackCooldown--;
+		}
+		horrorWindowTicks--;
+		if (horrorWindowTicks <= 0) {
+			horrorWindowTicks = 20 * 60;
+			horrorEventsInWindow = 0;
 		}
 		if (hallucinationShieldTicks > 0) {
 			hallucinationShieldTicks--;
@@ -154,6 +170,49 @@ public class PlayerSanityComponent {
 
 	public void resetLootCorruptionCooldown(RandomSource random) {
 		lootCorruptionCooldown = random.nextIntBetweenInclusive(160, 320);
+	}
+
+	public boolean tryConsumeHorrorEventBudget(SanityConfig config, RandomSource random, int cost) {
+		int safeCost = Math.max(1, cost);
+		if (horrorGlobalCooldown > 0) {
+			return false;
+		}
+		int maxPerMinute = Math.max(1, config.horrorEventsPerMinute);
+		if (horrorEventsInWindow + safeCost > maxPerMinute) {
+			return false;
+		}
+		horrorEventsInWindow += safeCost;
+
+		int minCooldown = Math.max(0, config.horrorGlobalCooldownMinTicks);
+		int maxCooldown = Math.max(minCooldown, config.horrorGlobalCooldownMaxTicks);
+		horrorGlobalCooldown = minCooldown + (maxCooldown > minCooldown ? random.nextInt(maxCooldown - minCooldown + 1) : 0);
+		return true;
+	}
+
+	public int getHorrorEventsInWindow() {
+		return horrorEventsInWindow;
+	}
+
+	public int getHorrorWindowTicksRemaining() {
+		return Math.max(0, horrorWindowTicks);
+	}
+
+	public int getHorrorGlobalCooldown() {
+		return Math.max(0, horrorGlobalCooldown);
+	}
+
+	public boolean markRitualSafeZone(boolean inSafeZone) {
+		boolean entered = inSafeZone && !ritualSafeZoneLastTick;
+		ritualSafeZoneLastTick = inSafeZone;
+		return entered;
+	}
+
+	public boolean canTriggerRitualFeedback() {
+		return ritualFeedbackCooldown <= 0;
+	}
+
+	public void resetRitualFeedbackCooldown(RandomSource random) {
+		ritualFeedbackCooldown = random.nextIntBetweenInclusive(140, 240);
 	}
 
 	public boolean tickZeroSanityTimer(int deathDelayTicks) {

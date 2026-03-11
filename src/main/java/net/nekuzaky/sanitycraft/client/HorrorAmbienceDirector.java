@@ -25,6 +25,9 @@ public class HorrorAmbienceDirector {
 	private static int stingerCooldown = 0;
 	private static int nearMissCooldown = 600;
 	private static int caveMiningCooldown = 1200;
+	private static int globalEventCooldown = 0;
+	private static int eventWindowTicks = 20 * 60;
+	private static int eventsInWindow = 0;
 	private static int caveMiningBurstsRemaining = 0;
 	private static int caveMiningBurstDelay = 0;
 	private static double caveMiningX = 0.0D;
@@ -73,7 +76,7 @@ public class HorrorAmbienceDirector {
 		RandomSource random = player.getRandom();
 
 		int band = sanity / 20;
-		if (band < lastSanityBand && stingerCooldown <= 0) {
+		if (band < lastSanityBand && stingerCooldown <= 0 && tryConsumeEventBudget(config, random, 1)) {
 			playAtPlayer(player, SoundEvents.WARDEN_NEARBY_CLOSER, SoundSource.HOSTILE, (0.22F + fear * 0.25F) * master, 0.8F + random.nextFloat() * 0.15F);
 			stingerCooldown = 120 + random.nextInt(120);
 		}
@@ -100,11 +103,19 @@ public class HorrorAmbienceDirector {
 		if (caveMiningCooldown > 0) {
 			caveMiningCooldown--;
 		}
+		if (globalEventCooldown > 0) {
+			globalEventCooldown--;
+		}
+		eventWindowTicks--;
+		if (eventWindowTicks <= 0) {
+			eventWindowTicks = 20 * 60;
+			eventsInWindow = 0;
+		}
 		if (caveMiningBurstDelay > 0) {
 			caveMiningBurstDelay--;
 		}
 
-		if (config.ambienceHeartbeatEnabled && sanity <= 35 && heartbeatCooldown <= 0) {
+		if (config.ambienceHeartbeatEnabled && sanity <= 35 && heartbeatCooldown <= 0 && tryConsumeEventBudget(config, random, 1)) {
 			float volume = (0.18F + fear * 0.55F + (hostilesNear ? 0.12F : 0.0F)) * master;
 			float pitch = 0.84F + random.nextFloat() * 0.18F;
 			playAtPlayer(player, SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, volume, pitch);
@@ -112,7 +123,7 @@ public class HorrorAmbienceDirector {
 		}
 		tickZeroSanityCollapseHeartbeat(player, random, config, master, sanity);
 
-		if (sanity <= 60 && breathCooldown <= 0) {
+		if (sanity <= 60 && breathCooldown <= 0 && tryConsumeEventBudget(config, random, 1)) {
 			SoundEvent breath = random.nextBoolean() ? SoundEvents.ENDERMAN_AMBIENT : SoundEvents.PHANTOM_AMBIENT;
 			float volume = (0.08F + fear * 0.28F) * master;
 			float pitch = 0.62F + random.nextFloat() * 0.18F;
@@ -120,7 +131,7 @@ public class HorrorAmbienceDirector {
 			breathCooldown = 90 + random.nextInt(120) + sanity;
 		}
 
-		if (config.ambienceSoundTrapsEnabled && sanity <= 45 && trapCooldown <= 0) {
+		if (config.ambienceSoundTrapsEnabled && sanity <= 45 && trapCooldown <= 0 && tryConsumeEventBudget(config, random, 1)) {
 			SoundEvent trap = pickTrapSound(random, hostilesNear);
 			float volume = (0.12F + fear * 0.32F) * master;
 			float pitch = 0.72F + random.nextFloat() * 0.35F;
@@ -128,21 +139,21 @@ public class HorrorAmbienceDirector {
 			trapCooldown = 80 + random.nextInt(160) + (int) (sanity * 0.6F);
 		}
 
-		if (sanity <= 25 && (cave || night || rain) && stingerCooldown <= 0 && random.nextFloat() < (0.012F + fear * 0.02F)) {
+		if (sanity <= 25 && (cave || night || rain) && stingerCooldown <= 0 && random.nextFloat() < (0.012F + fear * 0.02F) && tryConsumeEventBudget(config, random, 1)) {
 			float volume = (0.18F + fear * 0.35F) * master;
 			playAroundPlayer(player, SoundEvents.CREEPER_PRIMED, SoundSource.HOSTILE, volume, 0.85F + random.nextFloat() * 0.2F, random, 4.0D, 8.0D);
 			stingerCooldown = 140 + random.nextInt(120);
 		}
 
-		if (config.nearMissEnabled && sanity <= 42 && nearMissCooldown <= 0 && random.nextFloat() < (0.008F + fear * 0.013F)) {
+		if (config.nearMissEnabled && sanity <= 42 && nearMissCooldown <= 0 && random.nextFloat() < (0.008F + fear * 0.013F) && tryConsumeEventBudget(config, random, 1)) {
 			triggerNearMiss(player, random, master);
 			nearMissCooldown = randomRange(random, config.nearMissMinIntervalTicks, config.nearMissMaxIntervalTicks);
 		}
 
-		if (config.caveMiningHallucinationEnabled && cave && sanity <= 62 && caveMiningCooldown <= 0 && random.nextFloat() < (0.006F + fear * 0.014F)) {
+		if (config.caveMiningHallucinationEnabled && cave && sanity <= 62 && caveMiningCooldown <= 0 && random.nextFloat() < (0.006F + fear * 0.014F) && tryConsumeEventBudget(config, random, 1)) {
 			startCaveMiningSequence(player, random, config);
 		}
-		tickCaveMiningSequence(player, random, master);
+		tickCaveMiningSequence(player, random, master, config);
 	}
 
 	private static SoundEvent pickTrapSound(RandomSource random, boolean hostilesNear) {
@@ -199,6 +210,9 @@ public class HorrorAmbienceDirector {
 		if (collapseHeartbeatCooldown > 0) {
 			return;
 		}
+		if (!tryConsumeEventBudget(config, random, 1)) {
+			return;
+		}
 
 		float volume = (0.34F + progress * 0.56F) * master;
 		float pitch = 0.78F + progress * 0.32F + random.nextFloat() * 0.06F;
@@ -236,8 +250,13 @@ public class HorrorAmbienceDirector {
 		caveMiningCooldown = randomRange(random, config.caveMiningMinIntervalTicks, config.caveMiningMaxIntervalTicks);
 	}
 
-	private static void tickCaveMiningSequence(LocalPlayer player, RandomSource random, float master) {
+	private static void tickCaveMiningSequence(LocalPlayer player, RandomSource random, float master, SanityConfig config) {
 		if (caveMiningBurstsRemaining <= 0 || caveMiningBurstDelay > 0) {
+			return;
+		}
+		if (!tryConsumeEventBudget(config, random, 1)) {
+			caveMiningBurstsRemaining = Math.max(0, caveMiningBurstsRemaining - 1);
+			caveMiningBurstDelay = 10 + random.nextInt(12);
 			return;
 		}
 		double jitterX = caveMiningX + (random.nextDouble() - 0.5D) * 0.8D;
@@ -251,6 +270,21 @@ public class HorrorAmbienceDirector {
 		}
 		caveMiningBurstsRemaining--;
 		caveMiningBurstDelay = 8 + random.nextInt(11);
+	}
+
+	private static boolean tryConsumeEventBudget(SanityConfig config, RandomSource random, int cost) {
+		int safeCost = Math.max(1, cost);
+		if (globalEventCooldown > 0) {
+			return false;
+		}
+		if (eventsInWindow + safeCost > Math.max(1, config.horrorEventsPerMinute)) {
+			return false;
+		}
+		eventsInWindow += safeCost;
+		int min = Math.max(0, config.horrorGlobalCooldownMinTicks);
+		int max = Math.max(min, config.horrorGlobalCooldownMaxTicks);
+		globalEventCooldown = min + (max > min ? random.nextInt(max - min + 1) : 0);
+		return true;
 	}
 
 	private static int randomRange(RandomSource random, int min, int max) {

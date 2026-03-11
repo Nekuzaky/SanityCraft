@@ -1,7 +1,9 @@
 package net.nekuzaky.sanitycraft.sanity;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -44,6 +46,9 @@ public class SanityManager {
 		component.setSanity(sanity);
 		SanityNetworking.sync(player, component.getSanity());
 		SanityPersistence.set(player, component.getSanity());
+		if (before != component.getSanity()) {
+			debug(player, "manual_sanity_change " + before + " -> " + component.getSanity());
+		}
 		if (before > 0 && component.getSanity() <= 0) {
 			SanityJournal.log(player, "My sanity collapsed to zero.");
 		}
@@ -71,6 +76,7 @@ public class SanityManager {
 			component.resetZeroSanityTimer();
 			player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
 			player.displayClientMessage(Component.literal("Your mind collapsed."), true);
+			debugEvent(player, "zero_sanity_death");
 		}
 	}
 
@@ -82,11 +88,21 @@ public class SanityManager {
 		}
 
 		int before = component.getSanity();
+		SanityStage beforeStage = SanityStageResolver.resolve(before);
 		SanityEnvironmentSnapshot environment = SanityEnvironmentHelper.snapshot(player, config);
-		int delta = SanityCalculator.computeDelta(environment, config);
-		delta -= computePartyStressPenalty(player);
+		SanityDeltaResult deltaResult = SanityCalculator.computeDeltaResult(environment, config);
+		int partyStressPenalty = computePartyStressPenalty(player);
+		int delta = deltaResult.delta() - partyStressPenalty;
 		component.addSanity(delta);
 		SanityEffects.apply(player, component, config);
+		boolean enteredSafeZone = component.markRitualSafeZone(environment.ritualSafeZone());
+		if (environment.ritualSafeZone() && (enteredSafeZone || component.canTriggerRitualFeedback())) {
+			emitRitualSafeZoneFeedback(player, enteredSafeZone);
+			component.resetRitualFeedbackCooldown(player.getRandom());
+			if (enteredSafeZone) {
+				debugEvent(player, "ritual_safe_zone_enter");
+			}
+		}
 		if (environment.ritualSafeZone() && component.canWriteJournal()) {
 			SanityJournal.log(player, "The torch circle held. For now I can breathe.");
 			component.resetJournalCooldown(player.getRandom());
@@ -101,6 +117,16 @@ public class SanityManager {
 		if (component.getSanity() != before) {
 			SanityNetworking.sync(player, component.getSanity());
 			SanityPersistence.set(player, component.getSanity());
+		}
+		SanityStage afterStage = SanityStageResolver.resolve(component.getSanity());
+		if (afterStage != beforeStage) {
+			debug(player, "stage_change " + beforeStage + " -> " + afterStage);
+		}
+		if (SanityDebugState.isEnabled(player)) {
+			debug(player, "tick delta=" + delta + " (gain=" + deltaResult.rawGain() + ", loss=" + deltaResult.scaledLoss() + ", party=" + partyStressPenalty + ") "
+					+ "gains=[" + deltaResult.gainDetails() + "] losses=[" + deltaResult.lossDetails() + "] mult=[" + deltaResult.multiplierDetails() + "] "
+					+ "sanity=" + before + "->" + component.getSanity() + " stage=" + afterStage + " budget=" + component.getHorrorEventsInWindow() + "/" + Math.max(1, config.horrorEventsPerMinute)
+					+ " cd=" + component.getHorrorGlobalCooldown());
 		}
 	}
 
@@ -157,5 +183,28 @@ public class SanityManager {
 			return 0;
 		}
 		return Math.min(Math.max(0, config.partyStressMaxLoss), stressed * Math.max(0, config.partyStressLossPerPlayer));
+	}
+
+	public static void debug(ServerPlayer player, String message) {
+		SanityDebugState.log(player, message);
+	}
+
+	public static void debugEvent(ServerPlayer player, String eventName) {
+		SanityDebugState.log(player, "event=" + eventName);
+	}
+
+	private static void emitRitualSafeZoneFeedback(ServerPlayer player, boolean entered) {
+		ServerLevel level = player.level();
+		int baseCount = entered ? 20 : 10;
+		int particles = clampParticleCount(baseCount);
+		level.sendParticles(player, ParticleTypes.END_ROD, true, false, player.getX(), player.getY() + 1.0D, player.getZ(), particles, 0.65D, 0.55D, 0.65D, 0.01D);
+		level.sendParticles(player, ParticleTypes.HAPPY_VILLAGER, true, false, player.getX(), player.getY() + 0.8D, player.getZ(), Math.max(2, particles / 2), 0.45D, 0.25D, 0.45D, 0.01D);
+		float volume = entered ? 0.7F : 0.45F;
+		float pitch = entered ? 1.0F : 1.15F;
+		level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, volume, pitch);
+	}
+
+	private static int clampParticleCount(int requested) {
+		return Math.max(1, Math.min(Math.max(1, config.maxDirectedParticlesPerBurst), requested));
 	}
 }

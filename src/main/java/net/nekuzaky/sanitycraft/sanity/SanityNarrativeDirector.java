@@ -25,31 +25,38 @@ public class SanityNarrativeDirector {
 		}
 
 		RandomSource random = player.getRandom();
-		if (sanity <= 45 && component.canWhisper() && random.nextFloat() < clamp01(config.narrativeWhisperChance)) {
+		if (sanity <= 45 && component.canWhisper() && random.nextFloat() < clamp01(config.narrativeWhisperChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			sendNarrativeWhisper(player, sanity, random);
 			component.resetWhisperCooldown(random);
+			SanityManager.debugEvent(player, "narrative_whisper");
 		}
 
-		if (sanity <= 55 && random.nextFloat() < clamp01(config.narrativeFootstepChance)) {
+		if (sanity <= 55 && random.nextFloat() < clamp01(config.narrativeFootstepChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			playDistantFootstep(player, random);
+			SanityManager.debugEvent(player, "narrative_footstep");
 		}
-		if (config.biomePersonalityEnabled && sanity <= 58 && random.nextFloat() < clamp01(config.biomePersonalityChance)) {
+		if (config.biomePersonalityEnabled && sanity <= 58 && random.nextFloat() < clamp01(config.biomePersonalityChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			playBiomePersonality(player, random);
+			SanityManager.debugEvent(player, "biome_personality");
 		}
-		if (config.paranoiaMimicEnabled && sanity <= 50 && component.canPlayMimic() && random.nextFloat() < clamp01(config.paranoiaMimicChance)) {
+		if (config.paranoiaMimicEnabled && sanity <= 50 && component.canPlayMimic() && random.nextFloat() < clamp01(config.paranoiaMimicChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			playParanoiaMimic(player, random);
 			component.resetMimicCooldown(random);
+			SanityManager.debugEvent(player, "paranoia_mimic");
 		}
-		if (config.falseUiEventsEnabled && sanity <= 45 && component.canTriggerFalseUi() && random.nextFloat() < clamp01(config.falseUiEventChance)) {
+		if (config.falseUiEventsEnabled && sanity <= 45 && component.canTriggerFalseUi() && random.nextFloat() < clamp01(config.falseUiEventChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			triggerFalseUiEvent(player, random);
 			component.resetFalseUiCooldown(random);
+			SanityManager.debugEvent(player, "false_ui_event");
 		}
 
-		if (!config.streamerSafeMode && sanity <= 20 && component.canJumpscare() && random.nextFloat() < clamp01(config.narrativeJumpscareChance)) {
+		if (!config.streamerSafeMode && sanity <= 20 && component.canJumpscare() && random.nextFloat() < clamp01(config.narrativeJumpscareChance)
+				&& component.tryConsumeHorrorEventBudget(config, random, 2)) {
 			int variant = random.nextInt(3);
 			int duration = random.nextIntBetweenInclusive(18, 30);
 			SanityNetworking.triggerJumpscare(player, variant, duration);
 			component.resetJumpscareCooldown(random);
+			SanityManager.debugEvent(player, "jumpscare");
 		}
 	}
 

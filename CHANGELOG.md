@@ -2,6 +2,49 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.2-beta] - 2026-03-11
+
+### Added
+- Horror stability/performance guard rails:
+  - per-player horror event budget per minute
+  - global anti-spam cooldown for horror triggers
+  - network limiter for jumpscare/scare pulse packets
+  - particle burst clamping for directed hallucination effects
+- New debugging workflow:
+  - `/sanity debug on`
+  - `/sanity debug off`
+  - `/sanity debug status`
+  - detailed sanity tick debug messages (gain/loss sources, multipliers, stage transitions, event budget)
+- Sanity Afflictions V1 improvements:
+  - short breath-pressure style exhaustion pulses
+  - light tremor moments via scare pulses
+  - soft disorientation/slowdown progression at low sanity
+- Ritual Safe Zones V2 feedback:
+  - subtle calming aura particles
+  - audible safe-zone confirmation pulse
+
+### Changed
+- Rebalanced data-driven profiles (`light`, `medium`, `hardcore`) with tighter values for:
+  - sanity decay/recovery pacing
+  - contextual multipliers
+  - horror pacing intervals
+  - stalker/bloody creeper pressure windows
+- Ambient horror pacing on client is now budgeted/cooldown-gated to reduce event stacking.
+- Dread fog naming cleanup:
+  - unified config keys to `dreadFogEnabled`, `dreadFogIntensity`, `dreadFogNightBoost`
+  - removed legacy references with external-theme naming.
+- Fog presentation pass:
+  - smoother fog transitions
+  - reduced visible line artifacts in the overlay layer.
+- Sanity HUD style pass:
+  - sanity bar moved to dark gray/white palette
+  - pill icon integrated in sanity HUD badge
+  - removed inline numeric label (`S:100`) for cleaner immersion.
+
+### Fixed
+- Reduced immersion-breaking visible horizontal fog banding artifacts.
+- Improved safety against event/network/particle over-triggering under low sanity pressure.
+
 ## [0.1.1-beta] - 2026-03-11
 
 ### Added

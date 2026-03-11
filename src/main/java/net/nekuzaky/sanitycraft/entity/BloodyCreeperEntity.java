@@ -22,6 +22,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.nekuzaky.sanitycraft.sanity.SanityNetworking;
+import net.nekuzaky.sanitycraft.sanity.SanityManager;
+import net.nekuzaky.sanitycraft.sanity.SanityConfig;
 
 public class BloodyCreeperEntity extends Monster {
 	private boolean hallucinationExploded = false;
@@ -74,13 +76,16 @@ public class BloodyCreeperEntity extends Monster {
 		}
 		hallucinationExploded = true;
 		Level level = this.level();
+		SanityConfig config = SanityManager.getConfig();
+		int maxParticles = Math.max(1, config.maxDirectedParticlesPerBurst);
 		level.playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.0F, 0.95F + this.getRandom().nextFloat() * 0.15F);
 		if (level instanceof ServerLevel serverLevel) {
 			serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, this.getX(), this.getY() + 0.8D, this.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
-			serverLevel.sendParticles(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.6D, this.getZ(), 22, 0.35D, 0.25D, 0.35D, 0.02D);
+			serverLevel.sendParticles(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.6D, this.getZ(), Math.min(maxParticles, 22), 0.35D, 0.25D, 0.35D, 0.02D);
 		}
 		if (this.getTarget() instanceof ServerPlayer targetPlayer) {
 			SanityNetworking.triggerScarePulse(targetPlayer, 16, 6);
+			SanityManager.debugEvent(targetPlayer, "bloody_creeper_explosion");
 		}
 		this.discard();
 	}
