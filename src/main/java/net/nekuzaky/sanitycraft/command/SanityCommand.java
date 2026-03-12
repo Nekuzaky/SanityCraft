@@ -1,20 +1,29 @@
-package net.nekuzaky.sanitycraft.sanity;
+package net.nekuzaky.sanitycraft.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.nekuzaky.sanitycraft.sanity.PlayerSanityComponent;
+import net.nekuzaky.sanitycraft.sanity.SanityConfig;
+import net.nekuzaky.sanitycraft.sanity.SanityDebugState;
+import net.nekuzaky.sanitycraft.sanity.SanityJournal;
+import net.nekuzaky.sanitycraft.sanity.SanityManager;
+import net.nekuzaky.sanitycraft.sanity.SanityStage;
+import net.nekuzaky.sanitycraft.sanity.SanityStageResolver;
 
-public class SanityDebugCommands {
-	private SanityDebugCommands() {
+import com.mojang.brigadier.CommandDispatcher;
+
+public final class SanityCommand {
+	private SanityCommand() {
 	}
 
-	public static void register() {
-		CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) -> dispatcher.register(
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
+		dispatcher.register(
 				Commands.literal("sanity")
 						.requires(source -> source.hasPermission(2))
 						.executes(ctx -> showSanity(ctx.getSource().getPlayerOrException(), ctx.getSource()))
@@ -90,7 +99,7 @@ public class SanityDebugCommands {
 								.then(Commands.literal("on")
 										.executes(ctx -> setDebug(ctx.getSource().getPlayerOrException(), ctx.getSource(), true)))
 								.then(Commands.literal("off")
-										.executes(ctx -> setDebug(ctx.getSource().getPlayerOrException(), ctx.getSource(), false))))));
+										.executes(ctx -> setDebug(ctx.getSource().getPlayerOrException(), ctx.getSource(), false)))));
 	}
 
 	private static int showSanity(ServerPlayer target, CommandSourceStack source) {

@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
-import net.nekuzaky.sanitycraft.init.SanitycraftModItems;
+import net.nekuzaky.sanitycraft.registry.ModItems;
 
 public class SanityHudRenderer {
 	private SanityHudRenderer() {
@@ -122,19 +122,17 @@ public class SanityHudRenderer {
 		guiGraphics.fill(x, y, x + 16, y + 16, 0xC1202328);
 		guiGraphics.fill(x + 1, y + 1, x + 15, y + 2, 0x55FFFFFF);
 
-		if (SanitycraftModItems.PILL != null) {
-			try {
-				// Pill texture is currently portrait (1024x1536), so we draw with aspect compensation
-				// to avoid visible horizontal stretch in a 16x16 HUD slot.
-				float scaleX = 0.67F;
-				float drawOffsetX = (16.0F - 16.0F * scaleX) * 0.5F;
-				guiGraphics.pose().pushMatrix();
-				guiGraphics.pose().translate(x + drawOffsetX, y);
-				guiGraphics.pose().scale(scaleX, 1.0F);
-				guiGraphics.renderItem(new ItemStack(SanitycraftModItems.PILL), 0, 0);
-				guiGraphics.pose().popMatrix();
-			} catch (Exception ignored) {
-			}
+		try {
+			// Pill texture is currently portrait (1024x1536), so we draw with aspect compensation
+			// to avoid visible horizontal stretch in a 16x16 HUD slot.
+			float scaleX = 0.67F;
+			float drawOffsetX = (16.0F - 16.0F * scaleX) * 0.5F;
+			guiGraphics.pose().pushMatrix();
+			guiGraphics.pose().translate(x + drawOffsetX, y);
+			guiGraphics.pose().scale(scaleX, 1.0F);
+			guiGraphics.renderItem(new ItemStack(ModItems.PILL), 0, 0);
+			guiGraphics.pose().popMatrix();
+		} catch (Exception ignored) {
 		}
 	}
 

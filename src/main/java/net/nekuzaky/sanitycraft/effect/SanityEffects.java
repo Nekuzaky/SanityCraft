@@ -1,10 +1,19 @@
-package net.nekuzaky.sanitycraft.sanity;
+package net.nekuzaky.sanitycraft.effect;
 
 import net.nekuzaky.sanitycraft.SanitycraftMod;
 import net.nekuzaky.sanitycraft.entity.BloodyCreeperEntity;
 import net.nekuzaky.sanitycraft.entity.StalkerEntity;
-import net.nekuzaky.sanitycraft.init.SanitycraftModEntities;
-import net.nekuzaky.sanitycraft.init.SanitycraftModParticleTypes;
+import net.nekuzaky.sanitycraft.registry.ModEntities;
+import net.nekuzaky.sanitycraft.registry.ModParticles;
+import net.nekuzaky.sanitycraft.sanity.HallucinationSoundManager;
+import net.nekuzaky.sanitycraft.sanity.PlayerSanityComponent;
+import net.nekuzaky.sanitycraft.sanity.SanityConfig;
+import net.nekuzaky.sanitycraft.sanity.SanityManager;
+import net.nekuzaky.sanitycraft.sanity.SanityNetworking;
+import net.nekuzaky.sanitycraft.sanity.SanityStage;
+import net.nekuzaky.sanitycraft.sanity.SanityStageResolver;
+import net.nekuzaky.sanitycraft.sanity.SanityStalkerHuntDirector;
+import net.nekuzaky.sanitycraft.util.ServerWorkQueue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -18,7 +27,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
-public class SanityEffects {
+public final class SanityEffects {
 	private SanityEffects() {
 	}
 
@@ -104,7 +113,7 @@ public class SanityEffects {
 		}
 
 		BlockPos pos = randomNearby(player, random, Math.max(2.0D, config.stalkerMinSpawnDistance), Math.max(config.stalkerMinSpawnDistance + 1.0D, config.stalkerMaxSpawnDistance));
-		StalkerEntity stalker = SanitycraftModEntities.STALKER.create(level, EntitySpawnReason.EVENT);
+		StalkerEntity stalker = ModEntities.STALKER.create(level, EntitySpawnReason.EVENT);
 		if (stalker == null) {
 			return;
 		}
@@ -129,7 +138,7 @@ public class SanityEffects {
 		}
 
 		BlockPos pos = randomNearby(player, random, 7.0D, 15.0D);
-		BloodyCreeperEntity creeper = SanitycraftModEntities.BLOODY_CREEPER.create(level, EntitySpawnReason.EVENT);
+		BloodyCreeperEntity creeper = ModEntities.BLOODY_CREEPER.create(level, EntitySpawnReason.EVENT);
 		if (creeper == null) {
 			return;
 		}
@@ -140,7 +149,7 @@ public class SanityEffects {
 		level.addFreshEntity(creeper);
 		SanityManager.debugEvent(player, "bloody_creeper_spawned");
 
-		SanitycraftMod.queueServerWork(Math.max(1, config.bloodyCreeperLifetimeSeconds) * 20, () -> {
+		ServerWorkQueue.queue(Math.max(1, config.bloodyCreeperLifetimeSeconds) * 20, () -> {
 			if (creeper.isAlive()) {
 				creeper.triggerHallucinationExplosion();
 			}
@@ -149,7 +158,7 @@ public class SanityEffects {
 
 	private static void spawnBloodHallucination(ServerLevel level, ServerPlayer player, RandomSource random, SanityConfig config) {
 		BlockPos base = randomNearby(player, random, 4.0D, 8.0D);
-		SimpleParticleType blood = SanitycraftModParticleTypes.BLOOD;
+		SimpleParticleType blood = ModParticles.BLOOD;
 		if (blood == null) {
 			try {
 				Object raw = BuiltInRegistries.PARTICLE_TYPE.getValue(ResourceLocation.fromNamespaceAndPath(SanitycraftMod.MODID, "blood"));

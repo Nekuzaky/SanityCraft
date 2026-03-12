@@ -1,7 +1,4 @@
-/*
- *	MCreator note: This file will be REGENERATED on each build.
- */
-package net.nekuzaky.sanitycraft.init;
+package net.nekuzaky.sanitycraft.registry;
 
 import net.nekuzaky.sanitycraft.entity.StalkerEntity;
 import net.nekuzaky.sanitycraft.entity.BloodyCreeperEntity;
@@ -18,29 +15,22 @@ import net.minecraft.core.Registry;
 
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 
-public class SanitycraftModEntities {
-	public static EntityType<StalkerEntity> STALKER;
-	public static EntityType<BloodyCreeperEntity> BLOODY_CREEPER;
+public final class ModEntities {
+	public static final EntityType<StalkerEntity> STALKER = register("stalker",
+			EntityType.Builder.<StalkerEntity>of(StalkerEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3).ridingOffset(-0.6f).sized(0.6f, 1.8f));
+	public static final EntityType<BloodyCreeperEntity> BLOODY_CREEPER = register("bloody_creeper",
+			EntityType.Builder.<BloodyCreeperEntity>of(BloodyCreeperEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3).sized(0.6f, 1.7f));
 
-	public static void load() {
-		STALKER = register("stalker", EntityType.Builder.<StalkerEntity>of(StalkerEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3)
+	private ModEntities() {
+	}
 
-				.ridingOffset(-0.6f).sized(0.6f, 1.8f));
-		BLOODY_CREEPER = register("bloody_creeper", EntityType.Builder.<BloodyCreeperEntity>of(BloodyCreeperEntity::new, MobCategory.MONSTER).clientTrackingRange(64).updateInterval(3)
-
-				.sized(0.6f, 1.7f));
-		init();
+	public static void register() {
 		registerAttributes();
 	}
 
-	// Start of user code block custom entities
-	// End of user code block custom entities
 	private static <T extends Entity> EntityType<T> register(String registryname, EntityType.Builder<T> entityTypeBuilder) {
 		return Registry.register(BuiltInRegistries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(SanitycraftMod.MODID, registryname),
 				(EntityType<T>) entityTypeBuilder.build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(SanitycraftMod.MODID, registryname))));
-	}
-
-	public static void init() {
 	}
 
 	public static void registerAttributes() {

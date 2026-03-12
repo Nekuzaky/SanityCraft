@@ -18,6 +18,7 @@ public class PlayerSanityComponent {
 	private int mimicCooldown = 0;
 	private int journalCooldown = 0;
 	private int falseUiCooldown = 0;
+	private int baseEventCooldown = 0;
 	private int lootCorruptionCooldown = 0;
 	private int horrorGlobalCooldown = 0;
 	private int horrorWindowTicks = 20 * 60;
@@ -74,6 +75,9 @@ public class PlayerSanityComponent {
 		}
 		if (falseUiCooldown > 0) {
 			falseUiCooldown--;
+		}
+		if (baseEventCooldown > 0) {
+			baseEventCooldown--;
 		}
 		if (lootCorruptionCooldown > 0) {
 			lootCorruptionCooldown--;
@@ -162,6 +166,14 @@ public class PlayerSanityComponent {
 
 	public void resetFalseUiCooldown(RandomSource random) {
 		falseUiCooldown = random.nextIntBetweenInclusive(120, 260);
+	}
+
+	public boolean canTriggerBaseEvent() {
+		return baseEventCooldown <= 0;
+	}
+
+	public void resetBaseEventCooldown(RandomSource random) {
+		baseEventCooldown = random.nextIntBetweenInclusive(180, 320);
 	}
 
 	public boolean canTriggerLootCorruption() {

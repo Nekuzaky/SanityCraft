@@ -1,7 +1,4 @@
-/*
- *	MCreator note: This file will be REGENERATED on each build.
- */
-package net.nekuzaky.sanitycraft.init;
+package net.nekuzaky.sanitycraft.registry;
 
 import net.nekuzaky.sanitycraft.SanitycraftMod;
 
@@ -12,11 +9,13 @@ import net.minecraft.core.Registry;
 
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 
-public class SanitycraftModParticleTypes {
-	public static SimpleParticleType BLOOD;
+public final class ModParticles {
+	public static final SimpleParticleType BLOOD = register("blood", FabricParticleTypes.simple());
 
-	public static void load() {
-		register("blood", FabricParticleTypes.simple());
+	private ModParticles() {
+	}
+
+	public static void register() {
 	}
 
 	private static SimpleParticleType register(String registryname, SimpleParticleType element) {

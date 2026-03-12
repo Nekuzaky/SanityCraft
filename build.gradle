@@ -1,15 +1,17 @@
 plugins {
-    id 'fabric-loom' version '1.11-SNAPSHOT'
+    id 'fabric-loom' version '1.11.8'
 }
 
-version = '1.0'
-group = 'com.yourname'
-base.archivesName = 'modid'
-actualmodid = 'sanitycraft'
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
 
 loom {
     mixin {
-        defaultRefmapName = actualmodid + ".refmap.json"
+        defaultRefmapName = "${project.archives_base_name}.refmap.json"
     }
 
     if (file("src/main/resources/META-INF/sanitycraft.accesswidener").exists())
@@ -17,16 +19,27 @@ loom {
 }
 
 repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
     mavenCentral()
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:1.21.8"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:0.17.2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    //Fabric api
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.133.4+1.21.8"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -38,5 +51,3 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
-
-apply from: 'mcreator.gradle'

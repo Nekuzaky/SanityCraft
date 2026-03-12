@@ -22,7 +22,7 @@
 @rem ##########################################################################
 
 @rem Set local scope for the variables with windows NT shell
-if "%OS%"=="Windows_NT" setlocal
+if "%OS%"=="Windows_NT" setlocal EnableExtensions EnableDelayedExpansion
 
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
@@ -37,8 +37,14 @@ for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
 @rem Find java.exe
+call :tryAutoJavaHome
+if %ERRORLEVEL% equ 0 goto execute
+
 if defined JAVA_HOME goto findJavaFromJavaHome
 
+goto findJavaFromPath
+
+:findJavaFromPath
 set JAVA_EXE=java.exe
 %JAVA_EXE% -version >NUL 2>&1
 if %ERRORLEVEL% equ 0 goto execute
@@ -53,17 +59,53 @@ goto fail
 
 :findJavaFromJavaHome
 set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JAVA_EXE=%JAVA_HOME%\bin\java.exe
 
-if exist "%JAVA_EXE%" goto execute
+if not exist "%JAVA_EXE%" goto invalidJavaHome
+goto execute
+
+:invalidJavaHome
 
 echo.
-echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
+echo WARNING: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
 echo.
-echo Please set the JAVA_HOME variable in your environment to match the
-echo location of your Java installation.
+echo Falling back to java on PATH.
 
-goto fail
+goto findJavaFromPath
+
+:tryAutoJavaHome
+for /d %%e in ("%USERPROFILE%\.vscode\extensions\redhat.java-*-win32-x64") do (
+	for /d %%j in ("%%~fe\jre\21*") do (
+		call :useCandidate "%%~fj"
+		if !ERRORLEVEL! equ 0 exit /b 0
+	)
+)
+for /d %%p in ("%ProgramFiles%\Eclipse Adoptium") do (
+	for /d %%d in ("%%~fp\jdk-21*") do (
+		call :useCandidate "%%~fd"
+		if !ERRORLEVEL! equ 0 exit /b 0
+	)
+)
+for /d %%p in ("%ProgramFiles%\Java") do (
+	for /d %%d in ("%%~fp\jdk-21*") do (
+		call :useCandidate "%%~fd"
+		if !ERRORLEVEL! equ 0 exit /b 0
+	)
+)
+for /d %%p in ("%ProgramFiles%\Microsoft") do (
+	for /d %%d in ("%%~fp\jdk-21*") do (
+		call :useCandidate "%%~fd"
+		if !ERRORLEVEL! equ 0 exit /b 0
+	)
+)
+exit /b 1
+
+:useCandidate
+if not exist "%~1\bin\java.exe" exit /b 1
+if not exist "%~1\bin\javac.exe" exit /b 1
+set JAVA_HOME=%~1
+set JAVA_EXE=%~1\bin\java.exe
+exit /b 0
 
 :execute
 @rem Setup the command line

@@ -112,7 +112,16 @@ case "$( uname )" in                #(
 esac
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+REQUIRED_JAVA_MAJOR=21
 
+java_major() {
+    "$1" -version 2>&1 | sed -n 's/.*version "\(.*\)".*/\1/p' | head -n 1 | awk -F '[._-]' '{ if ($1 == 1) print $2; else print $1 }'
+}
+
+is_java_compatible() {
+    java_major_value=$(java_major "$1")
+    [ -n "$java_major_value" ] && [ "$java_major_value" -ge "$REQUIRED_JAVA_MAJOR" ]
+}
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
@@ -128,15 +137,39 @@ if [ -n "$JAVA_HOME" ] ; then
 Please set the JAVA_HOME variable in your environment to match the
 location of your Java installation."
     fi
-else
-    JAVACMD=java
-    if ! command -v java >/dev/null 2>&1
+    if ! is_java_compatible "$JAVACMD"
     then
-        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
-
-Please set the JAVA_HOME variable in your environment to match the
-location of your Java installation."
+        warn "WARNING: JAVA_HOME points to Java older than $REQUIRED_JAVA_MAJOR. Searching for a local JDK..."
+        JAVA_HOME=
+        JAVACMD=
     fi
+fi
+
+if [ -z "$JAVACMD" ] ; then
+    if command -v java >/dev/null 2>&1 && is_java_compatible java
+    then
+        JAVACMD=java
+    else
+        for candidate in \
+            "$HOME/.vscode/extensions"/redhat.java-*-*/jre/21* \
+            "/Library/Java/JavaVirtualMachines/"*21*.jdk/Contents/Home \
+            "/usr/lib/jvm/"*21* \
+            "/opt/"*jdk*21*
+        do
+            if [ -x "$candidate/bin/java" ] && is_java_compatible "$candidate/bin/java"
+            then
+                JAVA_HOME=$candidate
+                JAVACMD=$candidate/bin/java
+                break
+            fi
+        done
+    fi
+fi
+
+if [ -z "$JAVACMD" ] ; then
+    die "ERROR: Java $REQUIRED_JAVA_MAJOR or newer is required to build SanityCraft.
+
+Install a JDK 21 or set JAVA_HOME to a Java $REQUIRED_JAVA_MAJOR+ installation."
 fi
 
 # Increase the maximum file descriptors if we can.

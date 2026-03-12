@@ -1,6 +1,7 @@
 package net.nekuzaky.sanitycraft.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.RandomSource;
 
 public class SanityClientState {
 	private static int sanity = 100;
@@ -13,6 +14,17 @@ public class SanityClientState {
 	private static int nearMissDurationMs = 300;
 	private static int nearMissSide = 1;
 	private static long zeroSanityStartMs = 0L;
+	private static long hallucinationBlinkEndMs = 0L;
+	private static int hallucinationBlinkDurationMs = 0;
+	private static long phantomMessageEndMs = 0L;
+	private static int phantomMessageDurationMs = 0;
+	private static int phantomMessageIndex = 0;
+	private static int phantomMessageX = 0;
+	private static int phantomMessageY = 0;
+	private static long edgeWatcherEndMs = 0L;
+	private static int edgeWatcherDurationMs = 0;
+	private static int edgeWatcherSide = 1;
+	private static int edgeWatcherY = 0;
 
 	private SanityClientState() {
 	}
@@ -74,19 +86,21 @@ public class SanityClientState {
 	}
 
 	public static void tickVisualEffects(Minecraft client) {
-		if (scarePulseTicks <= 0 || client.player == null) {
-			return;
+		if (client.player != null) {
+			tickHallucinationBursts(client);
 		}
-		float factor = getScarePulseFactor();
-		float yawJitter = (client.player.getRandom().nextFloat() - 0.5F) * (0.6F + factor * 1.8F);
-		float pitchJitter = (client.player.getRandom().nextFloat() - 0.5F) * (0.4F + factor * 1.3F);
-		client.player.setYRot(client.player.getYRot() + yawJitter);
-		client.player.setYHeadRot(client.player.getYHeadRot() + yawJitter);
-		client.player.setXRot(Math.max(-90.0F, Math.min(90.0F, client.player.getXRot() + pitchJitter)));
+		if (scarePulseTicks > 0 && client.player != null) {
+			float factor = getScarePulseFactor();
+			float yawJitter = (client.player.getRandom().nextFloat() - 0.5F) * (0.6F + factor * 1.8F);
+			float pitchJitter = (client.player.getRandom().nextFloat() - 0.5F) * (0.4F + factor * 1.3F);
+			client.player.setYRot(client.player.getYRot() + yawJitter);
+			client.player.setYHeadRot(client.player.getYHeadRot() + yawJitter);
+			client.player.setXRot(Math.max(-90.0F, Math.min(90.0F, client.player.getXRot() + pitchJitter)));
 
-		scarePulseTicks--;
-		if (scarePulseTicks <= 0) {
-			scarePulseIntensity = 0;
+			scarePulseTicks--;
+			if (scarePulseTicks <= 0) {
+				scarePulseIntensity = 0;
+			}
 		}
 	}
 
@@ -113,6 +127,65 @@ public class SanityClientState {
 		return nearMissSide;
 	}
 
+	public static boolean hasHallucinationBlink() {
+		return System.currentTimeMillis() < hallucinationBlinkEndMs;
+	}
+
+	public static float getHallucinationBlinkProgress() {
+		if (!hasHallucinationBlink()) {
+			return 1.0F;
+		}
+		float total = Math.max(120.0F, hallucinationBlinkDurationMs);
+		float remaining = hallucinationBlinkEndMs - System.currentTimeMillis();
+		return 1.0F - Math.max(0.0F, Math.min(1.0F, remaining / total));
+	}
+
+	public static boolean hasPhantomMessage() {
+		return System.currentTimeMillis() < phantomMessageEndMs;
+	}
+
+	public static float getPhantomMessageProgress() {
+		if (!hasPhantomMessage()) {
+			return 1.0F;
+		}
+		float total = Math.max(600.0F, phantomMessageDurationMs);
+		float remaining = phantomMessageEndMs - System.currentTimeMillis();
+		return 1.0F - Math.max(0.0F, Math.min(1.0F, remaining / total));
+	}
+
+	public static int getPhantomMessageIndex() {
+		return phantomMessageIndex;
+	}
+
+	public static int getPhantomMessageX() {
+		return phantomMessageX;
+	}
+
+	public static int getPhantomMessageY() {
+		return phantomMessageY;
+	}
+
+	public static boolean hasEdgeWatcher() {
+		return System.currentTimeMillis() < edgeWatcherEndMs;
+	}
+
+	public static float getEdgeWatcherProgress() {
+		if (!hasEdgeWatcher()) {
+			return 1.0F;
+		}
+		float total = Math.max(140.0F, edgeWatcherDurationMs);
+		float remaining = edgeWatcherEndMs - System.currentTimeMillis();
+		return 1.0F - Math.max(0.0F, Math.min(1.0F, remaining / total));
+	}
+
+	public static int getEdgeWatcherSide() {
+		return edgeWatcherSide;
+	}
+
+	public static int getEdgeWatcherY() {
+		return edgeWatcherY;
+	}
+
 	public static boolean isZeroSanityActive() {
 		return sanity <= 0;
 	}
@@ -130,5 +203,29 @@ public class SanityClientState {
 			return 0;
 		}
 		return (int) ((System.currentTimeMillis() - zeroSanityStartMs) / 1000L);
+	}
+
+	private static void tickHallucinationBursts(Minecraft client) {
+		long now = System.currentTimeMillis();
+		RandomSource random = client.player.getRandom();
+		if (sanity <= 26 && now >= hallucinationBlinkEndMs && random.nextFloat() < 0.0045F) {
+			hallucinationBlinkDurationMs = 140 + random.nextInt(180);
+			hallucinationBlinkEndMs = now + hallucinationBlinkDurationMs;
+		}
+		if (sanity <= 40 && now >= phantomMessageEndMs && random.nextFloat() < 0.0035F) {
+			phantomMessageDurationMs = 900 + random.nextInt(1300);
+			phantomMessageEndMs = now + phantomMessageDurationMs;
+			phantomMessageIndex = random.nextInt(6);
+			int width = Math.max(320, client.getWindow().getGuiScaledWidth());
+			int height = Math.max(180, client.getWindow().getGuiScaledHeight());
+			phantomMessageX = 20 + random.nextInt(Math.max(24, width - 140));
+			phantomMessageY = 24 + random.nextInt(Math.max(24, height - 64));
+		}
+		if (sanity <= 22 && now >= edgeWatcherEndMs && random.nextFloat() < 0.0028F) {
+			edgeWatcherDurationMs = 220 + random.nextInt(220);
+			edgeWatcherEndMs = now + edgeWatcherDurationMs;
+			edgeWatcherSide = random.nextBoolean() ? 1 : -1;
+			edgeWatcherY = 48 + random.nextInt(Math.max(48, client.getWindow().getGuiScaledHeight() - 140));
+		}
 	}
 }

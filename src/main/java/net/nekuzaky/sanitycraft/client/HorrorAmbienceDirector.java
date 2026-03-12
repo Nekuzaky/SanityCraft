@@ -9,10 +9,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.nekuzaky.sanitycraft.sanity.SanityConfig;
 import net.nekuzaky.sanitycraft.sanity.SanityManager;
 
@@ -25,6 +28,8 @@ public class HorrorAmbienceDirector {
 	private static int stingerCooldown = 0;
 	private static int nearMissCooldown = 600;
 	private static int caveMiningCooldown = 1200;
+	private static int contextualCooldown = 120;
+	private static int shelterCreakCooldown = 160;
 	private static int globalEventCooldown = 0;
 	private static int eventWindowTicks = 20 * 60;
 	private static int eventsInWindow = 0;
@@ -72,7 +77,9 @@ public class HorrorAmbienceDirector {
 		boolean cave = isCaveLike(player);
 		boolean night = isNight(player);
 		boolean rain = player.level().isRaining();
+		boolean sheltered = isSheltered(player);
 		boolean hostilesNear = hasHostilesNearby(player, 18.0D);
+		String biomePath = getBiomePath(player);
 		RandomSource random = player.getRandom();
 
 		int band = sanity / 20;
@@ -103,6 +110,12 @@ public class HorrorAmbienceDirector {
 		if (caveMiningCooldown > 0) {
 			caveMiningCooldown--;
 		}
+		if (contextualCooldown > 0) {
+			contextualCooldown--;
+		}
+		if (shelterCreakCooldown > 0) {
+			shelterCreakCooldown--;
+		}
 		if (globalEventCooldown > 0) {
 			globalEventCooldown--;
 		}
@@ -129,6 +142,16 @@ public class HorrorAmbienceDirector {
 			float pitch = 0.62F + random.nextFloat() * 0.18F;
 			playAtPlayer(player, breath, SoundSource.AMBIENT, volume, pitch);
 			breathCooldown = 90 + random.nextInt(120) + sanity;
+		}
+
+		if (sanity <= 58 && contextualCooldown <= 0 && random.nextFloat() < (0.012F + fear * 0.018F) && tryConsumeEventBudget(config, random, 1)) {
+			playContextualAudio(player, random, master, fear, cave, night, rain, sheltered, biomePath);
+			contextualCooldown = 110 + random.nextInt(170) + Math.max(0, sanity / 2);
+		}
+
+		if (sanity <= 46 && sheltered && shelterCreakCooldown <= 0 && random.nextFloat() < (0.010F + fear * 0.016F) && tryConsumeEventBudget(config, random, 1)) {
+			playShelterCreak(player, random, master);
+			shelterCreakCooldown = 160 + random.nextInt(220);
 		}
 
 		if (config.ambienceSoundTrapsEnabled && sanity <= 45 && trapCooldown <= 0 && tryConsumeEventBudget(config, random, 1)) {
@@ -181,6 +204,14 @@ public class HorrorAmbienceDirector {
 	private static boolean isNight(LocalPlayer player) {
 		long timeOfDay = player.level().getDayTime() % 24000L;
 		return timeOfDay >= 13000L && timeOfDay <= 23000L;
+	}
+
+	private static boolean isSheltered(LocalPlayer player) {
+		BlockPos pos = player.blockPosition();
+		if (!player.level().canSeeSky(pos)) {
+			return true;
+		}
+		return hasBaseMarker(player, pos, 5);
 	}
 
 	private static boolean hasHostilesNearby(LocalPlayer player, double radius) {
@@ -239,6 +270,47 @@ public class HorrorAmbienceDirector {
 		player.level().playLocalSound(x, y, z, sound, source, Math.max(0.01F, volume), pitch, false);
 	}
 
+	private static void playContextualAudio(LocalPlayer player, RandomSource random, float master, float fear, boolean cave, boolean night, boolean rain, boolean sheltered, String biomePath) {
+		float volume = Math.max(0.01F, (0.12F + fear * 0.28F) * master);
+		if (sheltered) {
+			playAroundPlayer(player, random.nextBoolean() ? SoundEvents.CHEST_CLOSE : SoundEvents.WOODEN_DOOR_CLOSE, SoundSource.BLOCKS, volume, 0.72F + random.nextFloat() * 0.18F, random, 3.0D, 6.5D);
+			return;
+		}
+		if (cave) {
+			playAroundPlayer(player, random.nextBoolean() ? STONE_HIT_SOUND : SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, volume, 0.72F + random.nextFloat() * 0.22F, random, 6.0D, 11.0D);
+			return;
+		}
+		if (biomePath.contains("ocean") || biomePath.contains("river") || biomePath.contains("beach")) {
+			playAroundPlayer(player, SoundEvents.DROWNED_AMBIENT_WATER, SoundSource.HOSTILE, volume, 0.76F + random.nextFloat() * 0.14F, random, 6.0D, 12.0D);
+			return;
+		}
+		if (biomePath.contains("forest") || biomePath.contains("taiga") || biomePath.contains("swamp")) {
+			SoundEvent sound = random.nextBoolean() ? SoundEvents.FOX_SCREECH : SoundEvents.ENDERMAN_AMBIENT;
+			playAroundPlayer(player, sound, SoundSource.AMBIENT, volume, 0.64F + random.nextFloat() * 0.18F, random, 7.0D, 13.0D);
+			return;
+		}
+		if (biomePath.contains("nether")) {
+			playAroundPlayer(player, SoundEvents.GHAST_AMBIENT, SoundSource.HOSTILE, volume, 0.72F + random.nextFloat() * 0.20F, random, 7.0D, 12.0D);
+			return;
+		}
+		if (night || rain) {
+			SoundEvent sound = random.nextBoolean() ? SoundEvents.PHANTOM_AMBIENT : SoundEvents.ENDERMAN_AMBIENT;
+			playBehindPlayer(player, random.nextBoolean() ? 1 : -1, sound, SoundSource.HOSTILE, volume, 0.68F + random.nextFloat() * 0.18F, 5.0D);
+			return;
+		}
+		playAroundPlayer(player, SoundEvents.WARDEN_STEP, SoundSource.HOSTILE, volume, 0.82F + random.nextFloat() * 0.18F, random, 5.5D, 10.0D);
+	}
+
+	private static void playShelterCreak(LocalPlayer player, RandomSource random, float master) {
+		float volume = Math.max(0.01F, (0.14F + random.nextFloat() * 0.16F) * master);
+		if (random.nextBoolean()) {
+			playBehindPlayer(player, random.nextBoolean() ? 1 : -1, SoundEvents.WARDEN_STEP, SoundSource.HOSTILE, volume, 0.82F + random.nextFloat() * 0.16F, 3.6D);
+			playBehindPlayer(player, random.nextBoolean() ? 1 : -1, SoundEvents.ZOMBIE_STEP, SoundSource.HOSTILE, volume * 0.8F, 0.80F + random.nextFloat() * 0.18F, 4.1D);
+		} else {
+			playAroundPlayer(player, SoundEvents.WOODEN_DOOR_CLOSE, SoundSource.BLOCKS, volume, 0.72F + random.nextFloat() * 0.16F, random, 2.8D, 5.4D);
+		}
+	}
+
 	private static void startCaveMiningSequence(LocalPlayer player, RandomSource random, SanityConfig config) {
 		double angle = random.nextDouble() * Math.PI * 2.0D;
 		double distance = 8.0D + random.nextDouble() * 7.0D;
@@ -291,6 +363,31 @@ public class HorrorAmbienceDirector {
 		int lo = Math.max(20, Math.min(min, max));
 		int hi = Math.max(lo + 1, Math.max(min, max));
 		return random.nextInt(hi - lo) + lo;
+	}
+
+	private static String getBiomePath(LocalPlayer player) {
+		return player.level().getBiome(player.blockPosition()).unwrapKey().map(key -> key.location().getPath()).orElse("");
+	}
+
+	private static boolean hasBaseMarker(LocalPlayer player, BlockPos center, int radius) {
+		int safeRadius = Math.max(1, radius);
+		for (int x = -safeRadius; x <= safeRadius; x++) {
+			for (int y = -2; y <= 2; y++) {
+				for (int z = -safeRadius; z <= safeRadius; z++) {
+					BlockPos check = center.offset(x, y, z);
+					BlockState state = player.level().getBlockState(check);
+					if (isBaseMarker(state)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isBaseMarker(BlockState state) {
+		return state.is(Blocks.CHEST) || state.is(Blocks.TRAPPED_CHEST) || state.is(Blocks.BARREL) || state.is(BlockTags.BEDS) || state.is(Blocks.CRAFTING_TABLE) || state.is(Blocks.FURNACE)
+				|| state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER) || state.is(BlockTags.DOORS);
 	}
 
 	private static SoundEvent resolveSound(String id, SoundEvent fallback) {

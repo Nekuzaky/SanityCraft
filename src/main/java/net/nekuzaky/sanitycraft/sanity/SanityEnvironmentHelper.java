@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.nekuzaky.sanitycraft.init.SanitycraftModItems;
+import net.nekuzaky.sanitycraft.registry.ModItems;
 
 public class SanityEnvironmentHelper {
 	private SanityEnvironmentHelper() {
@@ -140,7 +140,7 @@ public class SanityEnvironmentHelper {
 	}
 
 	private static boolean isHoldingPill(ItemStack stack) {
-		return stack != null && !stack.isEmpty() && stack.getItem() == SanitycraftModItems.PILL;
+		return stack != null && !stack.isEmpty() && stack.getItem() == ModItems.PILL;
 	}
 
 	private static boolean isTorchLike(BlockState state) {

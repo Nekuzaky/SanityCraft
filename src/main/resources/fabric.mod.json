@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "sanitycraft",
-  "version": "0.1.0",
+  "version": "${version}",
   "name": "SanityCraft",
-  "description": "SanityCraft adds a psychological survival system to Minecraft.  Players have a sanity level that decreases in darkness, caves, storms and near hostile mobs.  Low sanity causes hallucinations, strange sounds and paranormal events.  Survive the world… or your own mind.",
+  "description": "SanityCraft adds a psychological survival system to Minecraft. Players have a sanity level that decreases in darkness, caves, storms and near hostile mobs. Low sanity causes hallucinations, strange sounds and paranormal events. Survive the world... or your own mind.",
   "authors": [
     "Nekuzaky"
   ],

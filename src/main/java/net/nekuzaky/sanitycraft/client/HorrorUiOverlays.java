@@ -16,6 +16,7 @@ import net.nekuzaky.sanitycraft.sanity.SanityConfig;
 import net.nekuzaky.sanitycraft.sanity.SanityManager;
 
 public class HorrorUiOverlays {
+	private static final String[] PHANTOM_WHISPERS = {"DON'T LOOK BACK", "THE DOOR MOVED", "STAY OUT OF THE DARK", "IT STOOD IN THE WINDOW", "YOUR HOUSE IS NOT SAFE", "KEEP THE LIGHT ON"};
 	private static long lastTorchScanMs = 0L;
 	private static float cachedTorchRepel = 0.0F;
 	private static float smoothedAmbientFogAlpha = 0.0F;
@@ -37,6 +38,7 @@ public class HorrorUiOverlays {
 		renderHeartbeatPressure(guiGraphics, sanity, width, height);
 		renderScarePulseOverlay(guiGraphics, width, height);
 		renderNearMissSilhouette(guiGraphics, width, height);
+		renderVisualHallucinations(guiGraphics, sanity, width, height, visual);
 
 		int darknessAlpha = (int) (Math.min(90, fear) * visual);
 		int tintAlpha = (int) (Math.min(70, fear / 2) * visual);
@@ -241,6 +243,19 @@ public class HorrorUiOverlays {
 		}
 	}
 
+	private static void renderVisualHallucinations(GuiGraphics guiGraphics, int sanity, int width, int height, float visual) {
+		if (sanity > 55 || visual <= 0.0F) {
+			return;
+		}
+		renderPeripheralShadows(guiGraphics, sanity, width, height, visual);
+		if (sanity <= 34) {
+			renderFrameCorruption(guiGraphics, width, height, visual);
+		}
+		renderPhantomMessage(guiGraphics, width, height, visual);
+		renderHallucinationBlink(guiGraphics, width, height, visual);
+		renderEdgeWatcher(guiGraphics, width, height, visual);
+	}
+
 	private static int clamp(int value, int min, int max) {
 		return Math.max(min, Math.min(max, value));
 	}
@@ -289,6 +304,94 @@ public class HorrorUiOverlays {
 		int eye = (clamp((int) (alpha * 0.65F), 0, 110) << 24) | 0x00800000;
 		guiGraphics.fill(x + 4, y + 10, x + 7, y + 12, eye);
 		guiGraphics.fill(x + bodyW - 7, y + 10, x + bodyW - 4, y + 12, eye);
+	}
+
+	private static void renderPeripheralShadows(GuiGraphics guiGraphics, int sanity, int width, int height, float visual) {
+		long time = System.currentTimeMillis();
+		float pressure = clamp01((55.0F - sanity) / 55.0F);
+		int bandCount = 3 + (sanity <= 25 ? 2 : 0);
+		for (int i = 0; i < bandCount; i++) {
+			double wave = Math.sin(time / (640.0D + i * 120.0D) + i * 1.6D);
+			int bandWidth = 12 + (int) (pressure * 24.0F) + i * 4;
+			int bandAlpha = clamp((int) ((18.0F + pressure * 48.0F + i * 6.0F) * visual), 0, 96);
+			int yOffset = (int) (height * (0.10F + i * 0.18F) + wave * (12.0D + i * 4.0D));
+			guiGraphics.fill(0, Math.max(0, yOffset), bandWidth, Math.min(height, yOffset + 56 + i * 14), (bandAlpha << 24));
+			guiGraphics.fill(width - bandWidth, Math.max(0, yOffset + 18), width, Math.min(height, yOffset + 82 + i * 12), (bandAlpha << 24));
+		}
+	}
+
+	private static void renderFrameCorruption(GuiGraphics guiGraphics, int width, int height, float visual) {
+		long phase = System.currentTimeMillis() / 140L;
+		for (int i = 0; i < 8; i++) {
+			int seed = mix((int) phase + i * 37);
+			int blockWidth = 18 + Math.abs(seed % 52);
+			int blockHeight = 6 + Math.abs((seed >> 4) % 28);
+			int x = Math.abs((seed >> 8) % Math.max(1, width - blockWidth));
+			int y = Math.abs((seed >> 15) % Math.max(1, height - blockHeight));
+			int alpha = clamp((int) ((18 + Math.abs((seed >> 22) % 60)) * visual), 0, 120);
+			int color = (alpha << 24) | (((seed >> 3) & 1) == 0 ? 0x100000 : 0x081010);
+			guiGraphics.fill(x, y, x + blockWidth, y + blockHeight, color);
+		}
+	}
+
+	private static void renderPhantomMessage(GuiGraphics guiGraphics, int width, int height, float visual) {
+		if (!SanityClientState.hasPhantomMessage()) {
+			return;
+		}
+		Minecraft minecraft = Minecraft.getInstance();
+		Font font = minecraft.font;
+		float progress = SanityClientState.getPhantomMessageProgress();
+		float fade = progress < 0.18F ? progress / 0.18F : progress > 0.82F ? (1.0F - progress) / 0.18F : 1.0F;
+		int alpha = clamp((int) (fade * 170.0F * visual), 0, 190);
+		if (alpha <= 0) {
+			return;
+		}
+		String text = PHANTOM_WHISPERS[Math.floorMod(SanityClientState.getPhantomMessageIndex(), PHANTOM_WHISPERS.length)];
+		int x = clamp(SanityClientState.getPhantomMessageX(), 12, Math.max(12, width - font.width(text) - 12));
+		int y = clamp(SanityClientState.getPhantomMessageY(), 14, Math.max(14, height - 16));
+		int red = ((alpha / 2) << 24) | 0x00700000;
+		int white = (alpha << 24) | 0x00E7D8D8;
+		int offset = (int) (Math.sin(System.currentTimeMillis() / 42.0D) * 2.0D);
+		guiGraphics.drawString(font, text, x + offset + 1, y, red, false);
+		guiGraphics.drawString(font, text, x, y, white, false);
+	}
+
+	private static void renderHallucinationBlink(GuiGraphics guiGraphics, int width, int height, float visual) {
+		if (!SanityClientState.hasHallucinationBlink()) {
+			return;
+		}
+		float progress = SanityClientState.getHallucinationBlinkProgress();
+		float eyelid = progress < 0.5F ? progress / 0.5F : (1.0F - progress) / 0.5F;
+		int cover = (int) (height * (0.18F + eyelid * 0.28F) * visual);
+		int alpha = clamp((int) (70.0F + eyelid * 140.0F), 0, 220);
+		guiGraphics.fill(0, 0, width, cover, (alpha << 24));
+		guiGraphics.fill(0, height - cover, width, height, (alpha << 24));
+	}
+
+	private static void renderEdgeWatcher(GuiGraphics guiGraphics, int width, int height, float visual) {
+		if (!SanityClientState.hasEdgeWatcher()) {
+			return;
+		}
+		float progress = SanityClientState.getEdgeWatcherProgress();
+		float fade = Math.max(0.0F, 1.0F - progress);
+		int alpha = clamp((int) (fade * 150.0F * visual), 0, 160);
+		if (alpha <= 0) {
+			return;
+		}
+		int side = SanityClientState.getEdgeWatcherSide();
+		int bodyW = 22;
+		int bodyH = 96;
+		int x = side < 0 ? 8 : width - bodyW - 8;
+		int y = clamp(SanityClientState.getEdgeWatcherY(), 24, Math.max(24, height - bodyH - 16));
+		int color = (alpha << 24);
+		guiGraphics.fill(x, y, x + bodyW, y + 52, color);
+		guiGraphics.fill(x - 7, y + 16, x, y + 46, color);
+		guiGraphics.fill(x + bodyW, y + 12, x + bodyW + 6, y + 42, color);
+		guiGraphics.fill(x + 4, y + 52, x + 10, y + bodyH, color);
+		guiGraphics.fill(x + bodyW - 10, y + 52, x + bodyW - 4, y + bodyH, color);
+		int eye = (clamp((int) (alpha * 0.65F), 0, 110) << 24) | 0x00950000;
+		guiGraphics.fill(x + 5, y + 12, x + 9, y + 14, eye);
+		guiGraphics.fill(x + bodyW - 9, y + 12, x + bodyW - 5, y + 14, eye);
 	}
 
 	private static boolean isCaveLike(LocalPlayer player) {
@@ -395,6 +498,14 @@ public class HorrorUiOverlays {
 		int g = (int) (fg + (tg - fg) * clamped);
 		int b = (int) (fb + (tb - fb) * clamped);
 		return (r << 16) | (g << 8) | b;
+	}
+
+	private static int mix(int value) {
+		int seed = value;
+		seed ^= seed << 13;
+		seed ^= seed >>> 17;
+		seed ^= seed << 5;
+		return seed;
 	}
 
 	private static void triggerCorruptedLootMoment(int sanity) {
