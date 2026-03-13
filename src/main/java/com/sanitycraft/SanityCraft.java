@@ -1,6 +1,7 @@
 package com.sanitycraft;
 
 import com.sanitycraft.data.config.SanityCraftConfig;
+import com.sanitycraft.network.sync.ClientEffectSyncService;
 import com.sanitycraft.network.sync.SanitySyncService;
 import com.sanitycraft.registry.ModBlocks;
 import com.sanitycraft.registry.ModCommands;
@@ -36,9 +37,10 @@ public final class SanityCraft implements ModInitializer {
 		ModItems.register();
 		ModCreativeTabs.register();
 		ModGameRules.register();
+		ClientEffectSyncService.register();
 		SanitySyncService.register();
 		SanityEvents.register();
 		ModCommands.register();
-		LOGGER.info("Prepared new foundation bootstrap for {}", MOD_ID);
+		LOGGER.info("Initializing active runtime for {}", MOD_ID);
 	}
 }

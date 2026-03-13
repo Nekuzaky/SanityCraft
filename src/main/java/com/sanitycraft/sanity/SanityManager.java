@@ -1,6 +1,6 @@
 package com.sanitycraft.sanity;
 
-import com.sanitycraft.network.sync.SanitySyncService;
+import com.sanitycraft.data.config.SanityCraftConfig;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,35 +17,41 @@ public final class SanityManager {
 	}
 
 	public static void load(ServerPlayer player) {
-		get(player).setSanity(SanityPersistence.load(player));
+		get(player).updateSanity(SanityPersistence.load(player), SanityCraftConfig.get());
+		get(player).requestImmediateSync();
 	}
 
 	public static void save(ServerPlayer player) {
-		SanityPersistence.save(player, get(player));
+		SanityPersistence.save(player, get(player).getSanity());
 	}
 
 	public static void remove(ServerPlayer player) {
 		COMPONENTS.remove(player.getUUID());
 	}
 
-	public static void copy(ServerPlayer source, ServerPlayer target) {
-		get(target).setSanity(get(source).getSanity());
+	public static void clearAll() {
+		COMPONENTS.clear();
 	}
 
-	public static void setSanity(ServerPlayer player, int value) {
-		get(player).setSanity(value);
+	public static SanityUpdate copy(ServerPlayer source, ServerPlayer target) {
+		return setSanity(target, get(source).getSanity());
 	}
 
-	public static void addSanity(ServerPlayer player, int delta) {
-		get(player).addSanity(delta);
-	}
-
-	public static void tick(ServerPlayer player) {
+	public static SanityUpdate setSanity(ServerPlayer player, int value) {
 		SanityComponent component = get(player);
-		if (!component.shouldSync()) {
-			return;
+		SanityUpdate update = component.updateSanity(value, SanityCraftConfig.get());
+		if (update.changed()) {
+			SanityPersistence.save(player, update.currentSanity());
 		}
-		SanitySyncService.sync(player, component);
-		component.markSynced();
+		SanityDebug.logStageTransition(player, update);
+		return update;
+	}
+
+	public static SanityUpdate addSanity(ServerPlayer player, int delta) {
+		return setSanity(player, get(player).getSanity() + delta);
+	}
+
+	public static void activateMentalShield(ServerPlayer player, int durationTicks) {
+		get(player).setHallucinationShieldTicks(durationTicks);
 	}
 }

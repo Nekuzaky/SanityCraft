@@ -1,5 +1,6 @@
 package com.sanitycraft.sanity;
 
+import com.sanitycraft.data.config.SanityCraftConfig;
 import net.minecraft.util.Mth;
 
 public final class SanityThresholds {
@@ -15,17 +16,25 @@ public final class SanityThresholds {
 	}
 
 	public static Stage resolve(int sanity) {
+		return resolve(sanity, null);
+	}
+
+	public static Stage resolve(int sanity, SanityCraftConfig config) {
 		int value = clamp(sanity);
-		if (value >= 76) {
+		int stableMin = config == null ? 71 : config.thresholds.stableMin;
+		int uneasyMin = config == null ? 50 : config.thresholds.uneasyMin;
+		int disturbedMin = config == null ? 30 : config.thresholds.disturbedMin;
+		int fracturedMin = config == null ? 10 : config.thresholds.fracturedMin;
+		if (value >= stableMin) {
 			return Stage.STABLE;
 		}
-		if (value >= 51) {
+		if (value >= uneasyMin) {
 			return Stage.UNEASY;
 		}
-		if (value >= 26) {
+		if (value >= disturbedMin) {
 			return Stage.DISTURBED;
 		}
-		if (value >= 11) {
+		if (value >= fracturedMin) {
 			return Stage.FRACTURED;
 		}
 		return Stage.COLLAPSE;

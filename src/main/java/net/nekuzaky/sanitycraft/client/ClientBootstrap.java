@@ -1,5 +1,6 @@
 package net.nekuzaky.sanitycraft.client;
 
+import com.sanitycraft.network.packet.ClientboundScarePulsePacket;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.nekuzaky.sanitycraft.sanity.SanityJumpscarePayload;
 import net.nekuzaky.sanitycraft.sanity.SanityScarePulsePayload;
@@ -17,6 +18,8 @@ public final class ClientBootstrap {
 		ClientPlayNetworking.registerGlobalReceiver(SanityJumpscarePayload.TYPE,
 				(payload, context) -> context.client().execute(() -> SanityClientState.triggerJumpscare(payload.variant(), payload.durationTicks())));
 		ClientPlayNetworking.registerGlobalReceiver(SanityScarePulsePayload.TYPE,
+				(payload, context) -> context.client().execute(() -> SanityClientState.triggerScarePulse(payload.durationTicks(), payload.intensity())));
+		ClientPlayNetworking.registerGlobalReceiver(ClientboundScarePulsePacket.TYPE,
 				(payload, context) -> context.client().execute(() -> SanityClientState.triggerScarePulse(payload.durationTicks(), payload.intensity())));
 		SanityHudRenderer.register();
 		HorrorAmbienceDirector.register();

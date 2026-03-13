@@ -1,5 +1,6 @@
 package com.sanitycraft.item.custom;
 
+import com.sanitycraft.data.config.SanityCraftConfig;
 import com.sanitycraft.sanity.SanityManager;
 import com.sanitycraft.sanity.SanityThresholds;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,9 +24,11 @@ public final class MentalShieldTotemItem extends Item {
 			return InteractionResult.SUCCESS;
 		}
 
+		SanityCraftConfig config = SanityCraftConfig.get();
 		ItemStack stack = player.getItemInHand(hand);
-		SanityManager.setSanity(serverPlayer, SanityThresholds.MAX_SANITY);
-		serverPlayer.getCooldowns().addCooldown(stack, 80);
+		SanityManager.addSanity(serverPlayer, Math.max(0, config.recovery.mentalShieldRestore));
+		SanityManager.activateMentalShield(serverPlayer, config.recovery.mentalShieldDurationTicks);
+		serverPlayer.getCooldowns().addCooldown(stack, config.recovery.mentalShieldCooldownTicks);
 		if (!serverPlayer.getAbilities().instabuild) {
 			stack.shrink(1);
 		}

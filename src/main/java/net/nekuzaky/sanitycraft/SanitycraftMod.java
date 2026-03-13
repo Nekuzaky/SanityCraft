@@ -19,6 +19,7 @@ public class SanitycraftMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Initializing {}", MODID);
+		com.sanitycraft.network.sync.ClientEffectSyncService.register();
 		ModEntities.register();
 		ModItems.register();
 		ModParticles.register();

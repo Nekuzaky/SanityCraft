@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.sanitycraft.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "sanitycraft.refmap.json",
+  "client": [
+    "FogRendererMixin",
+    "GameRendererMixin",
+    "MinecraftWindowTitleMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8.4"
+}

@@ -31,7 +31,7 @@ public final class PillItem extends Item {
 		ItemStack stack = player.getItemInHand(hand);
 		int restore = Math.max(1, SanityCraftConfig.get().recovery.pillRestore);
 		SanityManager.addSanity(serverPlayer, restore);
-		serverPlayer.getCooldowns().addCooldown(stack, 40);
+		serverPlayer.getCooldowns().addCooldown(stack, SanityCraftConfig.get().recovery.pillCooldownTicks);
 		if (!serverPlayer.getAbilities().instabuild) {
 			stack.shrink(1);
 		}

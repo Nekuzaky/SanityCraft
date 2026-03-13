@@ -1,6 +1,21 @@
 {
   "pack": {
     "pack_format": 81,
-    "description": "SanityCraft adds a psychological survival system to Minecraft. Players have a sanity level that decreases in darkness, caves, storms and near hostile mobs. Low sanity causes hallucinations, strange sounds and paranormal events. Survive the world... or your own mind."
+    "description": [
+      {
+        "text": "SanityCraft",
+        "color": "dark_red",
+        "bold": true
+      },
+      {
+        "text": "\nPsychological survival horror where darkness, storms, caves, and hostile mobs erode your sanity.",
+        "color": "gray"
+      },
+      {
+        "text": "\nSurvive the world... or your own mind.",
+        "color": "red",
+        "italic": true
+      }
+    ]
   }
 }

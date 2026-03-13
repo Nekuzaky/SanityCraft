@@ -43,6 +43,7 @@ public class SanityEvents {
 			SanityJournal.clear(handler.player);
 			SanityFractureQuestDirector.clear(handler.player);
 			SanityDebugState.clear(handler.player);
+			com.sanitycraft.network.sync.ClientEffectSyncService.clearPlayer(handler.player);
 			SanityNetworking.clearRateState(handler.player);
 			SanityManager.remove(handler.player);
 		});
