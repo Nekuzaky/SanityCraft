@@ -44,8 +44,22 @@ public final class SanityCraftMenuButton extends Button {
 		soundManager.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), getAccentPitch(this.accent), 0.25F));
 	}
 
+	public static void renderSkinned(
+			GuiGraphics guiGraphics,
+			int x,
+			int y,
+			int width,
+			int height,
+			Component message,
+			Accent accent,
+			boolean hovered,
+			boolean active,
+			float alpha) {
+		renderButton(guiGraphics, x, y, width, height, message, accent, hovered, active, alpha);
+	}
+
 	static void renderDecorative(GuiGraphics guiGraphics, int x, int y, int width, int height, Component message, Accent accent, boolean hovered, float alpha) {
-		renderButton(guiGraphics, x, y, width, height, message, accent, hovered, true, alpha);
+		renderSkinned(guiGraphics, x, y, width, height, message, accent, hovered, true, alpha);
 	}
 
 	private void maybePlayHoverCue(boolean hovered) {

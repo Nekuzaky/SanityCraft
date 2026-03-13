@@ -89,22 +89,22 @@ public final class SanityCraftMenuLayout {
 	}
 
 	public static SubmenuLayout createSubmenuLayout(int width, int height, int fontLineHeight) {
-		float scale = viewportScale(width, height, 0.70F, 1.35F);
-		int sideInset = clamp(Math.round(width * 0.05F), 28, 150);
-		int headerTop = clamp(Math.round(height * 0.035F), 16, 42);
-		int subtitleGap = clamp(Math.round(10.0F * scale), 8, 16);
-		int subtitleToContentGap = clamp(Math.round(22.0F * scale), 18, 34);
-		int logoWidth = Math.min(width - sideInset * 2, clamp(Math.round(294.0F * (0.92F + scale * 0.30F)), 240, 420));
+		float scale = viewportScale(width, height, 0.54F, 0.96F);
+		int sideInset = clamp(Math.round(width * 0.045F), 20, 120);
+		int headerTop = clamp(Math.round(height * 0.020F), 8, 22);
+		int subtitleGap = clamp(Math.round(6.0F * scale), 4, 9);
+		int subtitleToContentGap = clamp(Math.round(12.0F * scale), 8, 16);
+		int logoWidth = Math.min(width - sideInset * 2, clamp(Math.round(212.0F * (0.84F + scale * 0.16F)), 156, 262));
 		int logoHeight = Math.max(1, Math.round(logoWidth / LOGO_ASPECT));
 		int logoX = (width - logoWidth) / 2;
 		int subtitleY = headerTop + logoHeight + subtitleGap;
 		FooterLayout footer = createFooterLayout(width, height, fontLineHeight, scale, 0.0F);
 		int contentTop = subtitleY + fontLineHeight + subtitleToContentGap;
-		int contentBottom = height - footer.reservedHeight() - clamp(Math.round(height * 0.028F), 18, 34);
-		int panelWidth = Math.min(width - sideInset * 2, clamp(Math.round(width * 0.78F), 880, 1680));
+		int contentBottom = height - footer.reservedHeight() - clamp(Math.round(height * 0.022F), 12, 24);
+		int panelWidth = Math.min(width - sideInset * 2, clamp(Math.round(width * 0.66F), 620, 1180));
 		int contentLeft = (width - panelWidth) / 2;
-		int sectionGap = clamp(Math.round(20.0F * scale), 16, 30);
-		int minimumListHeight = clamp(Math.round(height * 0.28F), 180, 360);
+		int sectionGap = clamp(Math.round(12.0F * scale), 8, 16);
+		int minimumListHeight = clamp(Math.round(height * 0.20F), 126, 220);
 
 		return new SubmenuLayout(
 				width,
@@ -197,12 +197,12 @@ public final class SanityCraftMenuLayout {
 	}
 
 	public static void renderSubmenuHeader(GuiGraphics guiGraphics, Font font, SubmenuLayout layout, Component subtitle) {
-		int outerPadX = clamp(Math.round(layout.logoWidth() * 0.08F), 14, 28);
-		int outerPadY = clamp(Math.round(layout.logoHeight() * 0.16F), 10, 18);
-		int innerPadX = clamp(Math.round(layout.logoWidth() * 0.03F), 8, 16);
-		int innerPadY = clamp(Math.round(layout.logoHeight() * 0.06F), 6, 12);
-		int subtitleRuleWidth = clamp(Math.round(layout.logoWidth() * 0.34F), 104, 164);
-		int subtitleRuleY = layout.subtitleY() + font.lineHeight + 5;
+		int outerPadX = clamp(Math.round(layout.logoWidth() * 0.055F), 8, 16);
+		int outerPadY = clamp(Math.round(layout.logoHeight() * 0.12F), 4, 10);
+		int innerPadX = clamp(Math.round(layout.logoWidth() * 0.020F), 4, 8);
+		int innerPadY = clamp(Math.round(layout.logoHeight() * 0.045F), 2, 6);
+		int subtitleRuleWidth = clamp(Math.round(layout.logoWidth() * 0.26F), 56, 100);
+		int subtitleRuleY = layout.subtitleY() + font.lineHeight + 4;
 
 		guiGraphics.fill(0, 0, layout.screenWidth(), layout.contentTop() - layout.sectionGap() / 2, 0x0F000000);
 		guiGraphics.fill(
