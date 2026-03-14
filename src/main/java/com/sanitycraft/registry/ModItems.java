@@ -14,6 +14,7 @@ import net.minecraft.world.item.SpawnEggItem;
 public final class ModItems {
 	public static final Item STALKER_SPAWN_EGG = register("stalker_spawn_egg", properties -> new SpawnEggItem(ModEntities.STALKER, properties));
 	public static final Item BLOODY_CREEPER_SPAWN_EGG = register("bloody_creeper_spawn_egg", properties -> new SpawnEggItem(ModEntities.BLOODY_CREEPER, properties));
+	public static final Item OBSERVER_SPAWN_EGG = register("observer_spawn_egg", properties -> new SpawnEggItem(ModEntities.OBSERVER, properties));
 	public static final Item PILL = register("pill", properties -> new PillItem(properties.stacksTo(16).rarity(Rarity.UNCOMMON)));
 	public static final Item MENTAL_SHIELD_TOTEM =
 			register("mentalshieldtotem", properties -> new MentalShieldTotemItem(properties.stacksTo(1).rarity(Rarity.RARE)));

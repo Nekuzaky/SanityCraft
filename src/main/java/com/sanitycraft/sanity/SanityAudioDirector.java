@@ -122,7 +122,22 @@ public final class SanityAudioDirector {
 		return true;
 	}
 
-	public static void playFalseSafetyBreathing(ServerPlayer player, boolean intense, String source) {
+	public static boolean playFalseChest(ServerPlayer player, String source) {
+		AudioOutcome outcome = attemptEvent(
+				player,
+				SanityCraftConfig.get(),
+				player.getRandom(),
+				SanityAudioEvent.CHEST_SOUND,
+				source,
+				PlaybackStyle.CHEST,
+				false);
+		if (!outcome.accepted()) {
+			SanityDebug.logAudioRejected(player, SanityAudioEvent.CHEST_SOUND, source, outcome.reason());
+		}
+		return outcome.accepted();
+	}
+
+	public static boolean playFalseSafetyBreathing(ServerPlayer player, boolean intense, String source) {
 		AudioOutcome outcome = attemptEvent(
 				player,
 				SanityCraftConfig.get(),
@@ -134,6 +149,7 @@ public final class SanityAudioDirector {
 		if (!outcome.accepted()) {
 			SanityDebug.logAudioRejected(player, SanityAudioEvent.BREATHING, source, outcome.reason());
 		}
+		return outcome.accepted();
 	}
 
 	public static void playWhisperBurst(ServerPlayer player, boolean intense, String source) {

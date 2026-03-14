@@ -96,7 +96,7 @@ public final class SanityCraftConfig {
 				|| thresholds.fracturedMin < 1
 				|| thresholds.stableMin > 100) {
 			thresholds = new Thresholds();
-		} else if (thresholds.stableMin == 76 && thresholds.uneasyMin == 51 && thresholds.disturbedMin == 26 && thresholds.fracturedMin == 11) {
+		} else if (thresholds.stableMin == 71 && thresholds.uneasyMin == 50 && thresholds.disturbedMin == 30 && thresholds.fracturedMin == 10) {
 			thresholds = new Thresholds();
 		}
 		decay.darknessLightThreshold = Mth.clamp(decay.darknessLightThreshold, 0, 15);
@@ -170,10 +170,10 @@ public final class SanityCraftConfig {
 	}
 
 	public static final class Thresholds {
-		public int stableMin = 71;
-		public int uneasyMin = 50;
-		public int disturbedMin = 30;
-		public int fracturedMin = 10;
+		public int stableMin = 76;
+		public int uneasyMin = 51;
+		public int disturbedMin = 26;
+		public int fracturedMin = 11;
 	}
 
 	public static final class Decay {

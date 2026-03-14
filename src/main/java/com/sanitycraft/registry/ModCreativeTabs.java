@@ -27,11 +27,15 @@ public final class ModCreativeTabs {
 						.title(Component.translatable("item_group.sanitycraft.sanity_craft"))
 						.icon(() -> new ItemStack(ModItems.STALKER_SPAWN_EGG))
 						.displayItems((parameters, output) -> {
+							output.accept(ModItems.OBSERVER_SPAWN_EGG);
+							output.accept(ModItems.STALKER_SPAWN_EGG);
+							output.accept(ModItems.BLOODY_CREEPER_SPAWN_EGG);
 							output.accept(ModItems.PILL);
 							output.accept(ModItems.MENTAL_SHIELD_TOTEM);
 						})
 						.build());
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register(output -> {
+			output.accept(ModItems.OBSERVER_SPAWN_EGG);
 			output.accept(ModItems.STALKER_SPAWN_EGG);
 			output.accept(ModItems.BLOODY_CREEPER_SPAWN_EGG);
 		});

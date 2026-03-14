@@ -43,6 +43,15 @@ public final class ClientSanityState {
 	private static int shadowFlickerDurationMs;
 	private static long fakeDamageFlashEndMs;
 	private static int fakeDamageFlashDurationMs;
+	private static int hudDistortionTicks;
+	private static int hudDistortionIntensity;
+	private static long collapseSilenceEndMs;
+	private static int collapseSilenceDurationMs;
+	private static int collapseSilenceIntensity;
+	private static long collapseFalseHudEndMs;
+	private static int collapseFalseHudDurationMs;
+	private static int collapseFalseHudIntensity;
+	private static int collapseFalseHudVariant;
 	private static long nextSubtitleSeedMs;
 
 	private ClientSanityState() {
@@ -86,15 +95,37 @@ public final class ClientSanityState {
 	}
 
 	public static float getHudInstability() {
-		if (sanity > 5) {
-			return 0.0F;
-		}
-		return Mth.clamp(0.18F + (5 - sanity) * 0.16F, 0.0F, 1.0F);
+		float base = sanity > 9 ? 0.0F : Mth.clamp(0.08F + (10 - sanity) * 0.07F, 0.0F, 0.78F);
+		float burst = hudDistortionTicks <= 0 ? 0.0F : Mth.clamp(hudDistortionIntensity / 10.0F, 0.10F, 0.42F);
+		float falseHud = hasCollapseFalseHud() ? Mth.clamp(collapseFalseHudIntensity / 10.0F, 0.08F, 0.34F) : 0.0F;
+		return Mth.clamp(base + burst + falseHud, 0.0F, 1.0F);
 	}
 
 	public static void triggerScarePulse(int durationTicks, int intensity) {
 		scarePulseTicks = Math.max(scarePulseTicks, Math.max(1, durationTicks));
 		scarePulseIntensity = Math.max(scarePulseIntensity, Math.max(1, intensity));
+	}
+
+	public static void triggerHudDistortion(int durationTicks, int intensity, boolean fakeDamageFlash) {
+		hudDistortionTicks = Math.max(hudDistortionTicks, Math.max(1, durationTicks));
+		hudDistortionIntensity = Math.max(hudDistortionIntensity, Math.max(1, intensity));
+		if (fakeDamageFlash) {
+			fakeDamageFlashDurationMs = Math.max(fakeDamageFlashDurationMs, 180);
+			fakeDamageFlashEndMs = Math.max(fakeDamageFlashEndMs, System.currentTimeMillis() + fakeDamageFlashDurationMs);
+		}
+	}
+
+	public static void triggerCollapseSilence(int durationTicks, int intensity) {
+		collapseSilenceDurationMs = Math.max(collapseSilenceDurationMs, Math.max(300, durationTicks * 50));
+		collapseSilenceEndMs = Math.max(collapseSilenceEndMs, System.currentTimeMillis() + collapseSilenceDurationMs);
+		collapseSilenceIntensity = Math.max(collapseSilenceIntensity, Math.max(1, intensity));
+	}
+
+	public static void triggerCollapseFalseHud(int durationTicks, int intensity, int variant) {
+		collapseFalseHudDurationMs = Math.max(collapseFalseHudDurationMs, Math.max(500, durationTicks * 50));
+		collapseFalseHudEndMs = Math.max(collapseFalseHudEndMs, System.currentTimeMillis() + collapseFalseHudDurationMs);
+		collapseFalseHudIntensity = Math.max(collapseFalseHudIntensity, Math.max(1, intensity));
+		collapseFalseHudVariant = variant;
 	}
 
 	public static void tick(Minecraft client) {
@@ -105,6 +136,12 @@ public final class ClientSanityState {
 
 		tickLocalBursts(client);
 		tickCameraEffects(client);
+		if (hudDistortionTicks > 0) {
+			hudDistortionTicks--;
+			if (hudDistortionTicks <= 0) {
+				hudDistortionIntensity = 0;
+			}
+		}
 	}
 
 	public static boolean hasScarePulse() {
@@ -235,6 +272,62 @@ public final class ClientSanityState {
 		return Mth.clamp(envelope, 0.0F, 1.0F);
 	}
 
+	public static boolean hasCollapseSilence() {
+		return System.currentTimeMillis() < collapseSilenceEndMs;
+	}
+
+	public static float getCollapseSilenceStrength() {
+		if (!hasCollapseSilence()) {
+			return 0.0F;
+		}
+		float total = Math.max(240.0F, collapseSilenceDurationMs);
+		float remaining = collapseSilenceEndMs - System.currentTimeMillis();
+		float progress = 1.0F - Math.max(0.0F, Math.min(1.0F, remaining / total));
+		float envelope = progress < 0.22F ? progress / 0.22F : (1.0F - progress) / 0.78F;
+		return Mth.clamp(envelope * (0.35F + collapseSilenceIntensity * 0.16F), 0.0F, 1.0F);
+	}
+
+	public static boolean hasCollapseFalseHud() {
+		return System.currentTimeMillis() < collapseFalseHudEndMs;
+	}
+
+	public static int getFalseHeartUnits(int actualUnits, int maxUnits) {
+		if (!hasCollapseFalseHud()) {
+			return actualUnits;
+		}
+		float wave = (float) Math.sin(System.currentTimeMillis() / 120.0D + collapseFalseHudVariant * 0.65D);
+		int offset = Math.round(wave * Math.max(1.0F, collapseFalseHudIntensity * 0.8F));
+		if (((System.currentTimeMillis() / 180L) + collapseFalseHudVariant) % 3L == 0L) {
+			offset -= 1;
+		}
+		return Mth.clamp(actualUnits + offset, 0, maxUnits);
+	}
+
+	public static int getFalseFoodUnits(int actualUnits, int maxUnits) {
+		if (!hasCollapseFalseHud()) {
+			return actualUnits;
+		}
+		float wave = (float) Math.cos(System.currentTimeMillis() / 95.0D + collapseFalseHudVariant * 0.9D);
+		int offset = Math.round(wave * Math.max(1.0F, collapseFalseHudIntensity * 0.7F)) - 1;
+		return Mth.clamp(actualUnits + offset, 0, maxUnits);
+	}
+
+	public static float getFalseXpProgress(float actualProgress) {
+		if (!hasCollapseFalseHud()) {
+			return actualProgress;
+		}
+		float wave = (float) Math.sin(System.currentTimeMillis() / 140.0D + collapseFalseHudVariant * 0.4D) * (0.10F + collapseFalseHudIntensity * 0.035F);
+		float snap = (((System.currentTimeMillis() / 160L) + collapseFalseHudVariant) & 3L) == 0L ? -0.15F : 0.0F;
+		return Mth.clamp(actualProgress + wave + snap, 0.0F, 1.0F);
+	}
+
+	public static int getFalseHotbarSlot() {
+		if (!hasCollapseFalseHud()) {
+			return -1;
+		}
+		return Math.floorMod(collapseFalseHudVariant + (int) (System.currentTimeMillis() / 170L), 9);
+	}
+
 	public static boolean shouldRefreshSubtitle() {
 		long now = System.currentTimeMillis();
 		if (now < nextSubtitleSeedMs) {
@@ -285,7 +378,7 @@ public final class ClientSanityState {
 			phantomTextX = 18 + random.nextInt(Math.max(24, width - 180));
 			phantomTextY = 20 + random.nextInt(Math.max(24, height - 80));
 		}
-		if (sanity <= 0 && now >= fakeDamageFlashEndMs && random.nextFloat() < 0.0042F) {
+		if (sanity <= 4 && now >= fakeDamageFlashEndMs && random.nextFloat() < 0.0042F) {
 			fakeDamageFlashDurationMs = 120 + random.nextInt(120);
 			fakeDamageFlashEndMs = now + fakeDamageFlashDurationMs;
 		}
@@ -333,5 +426,14 @@ public final class ClientSanityState {
 		structureEchoEndMs = 0L;
 		shadowFlickerEndMs = 0L;
 		fakeDamageFlashEndMs = 0L;
+		hudDistortionTicks = 0;
+		hudDistortionIntensity = 0;
+		collapseSilenceEndMs = 0L;
+		collapseSilenceDurationMs = 0;
+		collapseSilenceIntensity = 0;
+		collapseFalseHudEndMs = 0L;
+		collapseFalseHudDurationMs = 0;
+		collapseFalseHudIntensity = 0;
+		collapseFalseHudVariant = 0;
 	}
 }

@@ -1,9 +1,12 @@
 package com.sanitycraft.client.menu;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
@@ -57,7 +60,6 @@ public final class SanityCraftOptionsScreen extends OptionsScreen {
 				time,
 				distortion);
 		if (layout != null) {
-			SanityCraftMenuLayout.renderSubmenuHeader(guiGraphics, this.font, layout, SanityCraftMenuEffects.getSubtitle());
 			SanityCraftMenuLayout.renderFooter(guiGraphics, this.font, layout.footer());
 		}
 	}
@@ -67,7 +69,41 @@ public final class SanityCraftOptionsScreen extends OptionsScreen {
 			return;
 		}
 
-		layout = SanityCraftMenuLayout.createSubmenuLayout(this.width, this.height, this.font.lineHeight);
+		layout = SanityCraftMenuLayout.createSubmenuLayout(this.width, this.height, this.font.lineHeight, false);
 		SanityCraftMenuLayout.reflowSubmenuWidgets(this, layout, widget -> widget instanceof StringWidget);
+		nudgeTopControlRow();
+	}
+
+	private void nudgeTopControlRow() {
+		if (layout == null) {
+			return;
+		}
+
+		int minimumTop = Math.max(42, Math.min(60, Math.round(this.height * 0.052F)));
+		int rowCutoff = layout.contentTop() - 12;
+		List<AbstractWidget> topWidgets = new ArrayList<>();
+		int topY = Integer.MAX_VALUE;
+
+		for (var listener : this.children()) {
+			if (!(listener instanceof AbstractWidget widget) || !widget.visible || widget instanceof StringWidget) {
+				continue;
+			}
+
+			if (widget.getY() >= rowCutoff) {
+				continue;
+			}
+
+			topWidgets.add(widget);
+			topY = Math.min(topY, widget.getY());
+		}
+
+		if (topWidgets.isEmpty() || topY >= minimumTop) {
+			return;
+		}
+
+		int deltaY = minimumTop - topY;
+		for (AbstractWidget widget : topWidgets) {
+			widget.setY(widget.getY() + deltaY);
+		}
 	}
 }

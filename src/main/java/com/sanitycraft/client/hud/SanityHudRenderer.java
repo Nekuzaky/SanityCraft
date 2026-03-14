@@ -1,5 +1,6 @@
 package com.sanitycraft.client.hud;
 
+import com.sanitycraft.client.events.SanityClientEventState;
 import com.sanitycraft.client.effects.SanityVisualProfile;
 import com.sanitycraft.sanity.SanityThresholds;
 import net.fabricmc.api.EnvType;
@@ -32,6 +33,7 @@ public final class SanityHudRenderer {
 		int sanity = ClientSanityState.getSanity();
 		SanityThresholds.Stage stage = ClientSanityState.getStage();
 		renderOverlays(guiGraphics, minecraft, sanity, stage);
+		SanityClientEventState.renderHudOverlay(guiGraphics, minecraft);
 		renderCollapseHudInstability(guiGraphics, minecraft);
 		renderSanityPanel(guiGraphics, minecraft.font, sanity, stage);
 	}
@@ -119,6 +121,9 @@ public final class SanityHudRenderer {
 		}
 		if (ClientSanityState.hasPhantomText()) {
 			renderPhantomText(guiGraphics, minecraft.font);
+		}
+		if (ClientSanityState.hasCollapseSilence()) {
+			renderCollapseSilenceDip(guiGraphics, width, height);
 		}
 		if (stage == SanityThresholds.Stage.COLLAPSE) {
 			renderCollapseNoise(guiGraphics, width, height, time, instability + distortion * 0.35F);
@@ -324,6 +329,20 @@ public final class SanityHudRenderer {
 		}
 	}
 
+	private static void renderCollapseSilenceDip(GuiGraphics guiGraphics, int width, int height) {
+		float strength = ClientSanityState.getCollapseSilenceStrength();
+		if (strength <= 0.0F) {
+			return;
+		}
+		int alpha = clamp((int) (46.0F + strength * 128.0F), 0, 172);
+		int edge = clamp((int) (28.0F + strength * 52.0F), 18, 84);
+		guiGraphics.fill(0, 0, width, height, (alpha << 24) | 0x040404);
+		guiGraphics.fill(0, 0, width, edge, ((alpha / 2) << 24));
+		guiGraphics.fill(0, height - edge, width, height, ((alpha / 2) << 24));
+		guiGraphics.fill(0, 0, edge, height, ((alpha / 3) << 24));
+		guiGraphics.fill(width - edge, 0, width, height, ((alpha / 3) << 24));
+	}
+
 	private static void renderCollapseHudInstability(GuiGraphics guiGraphics, Minecraft minecraft) {
 		float instability = ClientSanityState.getHudInstability();
 		if (instability <= 0.0F || minecraft.player == null) {
@@ -336,6 +355,7 @@ public final class SanityHudRenderer {
 		long time = System.currentTimeMillis();
 		int seed = mix((int) (time / 45L));
 		float flashStrength = ClientSanityState.getFakeDamageFlashStrength();
+		int falseHotbarSlot = ClientSanityState.getFalseHotbarSlot();
 		int jitterX = ((seed & 1) == 0 ? -1 : 1) * (instability > 0.42F ? 2 : 1);
 		int jitterY = ((seed >> 2) & 1) == 0 ? 0 : 1;
 		if (flashStrength > 0.0F) {
@@ -346,6 +366,9 @@ public final class SanityHudRenderer {
 		renderHealthInstability(guiGraphics, minecraft, centerX, height, instability, flashStrength, jitterX, jitterY, seed);
 		renderFoodInstability(guiGraphics, minecraft, centerX, height, instability, flashStrength, jitterX, jitterY, seed);
 		renderExperienceInstability(guiGraphics, minecraft, centerX, height, instability, flashStrength, jitterX, jitterY);
+		if (falseHotbarSlot >= 0) {
+			renderFalseHotbarEmphasis(guiGraphics, centerX, height, falseHotbarSlot, instability, flashStrength);
+		}
 
 		if (flashStrength > 0.0F) {
 			int alpha = clamp((int) (24.0F + flashStrength * 54.0F), 0, 96);
@@ -364,7 +387,7 @@ public final class SanityHudRenderer {
 			int jitterY,
 			int seed) {
 		int heartSlots = Math.max(10, Mth.ceil(minecraft.player.getMaxHealth() / 2.0F));
-		int filledUnits = Mth.ceil(minecraft.player.getHealth());
+		int filledUnits = ClientSanityState.getFalseHeartUnits(Mth.ceil(minecraft.player.getHealth()), heartSlots * 2);
 		for (int i = 0; i < heartSlots; i++) {
 			int row = i / 10;
 			int column = i % 10;
@@ -395,7 +418,7 @@ public final class SanityHudRenderer {
 			int jitterX,
 			int jitterY,
 			int seed) {
-		int foodLevel = minecraft.player.getFoodData().getFoodLevel();
+		int foodLevel = ClientSanityState.getFalseFoodUnits(minecraft.player.getFoodData().getFoodLevel(), 20);
 		for (int i = 0; i < 10; i++) {
 			int x = centerX + 91 - (i + 1) * 8 + jitterX - ((((seed >> ((i + 1) % 5)) & 1) == 0) ? 0 : 1);
 			int y = height - 39 + jitterY;
@@ -429,7 +452,7 @@ public final class SanityHudRenderer {
 
 		int x = centerX - 91 + jitterX;
 		int y = height - 29 + jitterY;
-		int filled = clamp((int) (minecraft.player.experienceProgress * 183.0F), 0, 182);
+		int filled = clamp((int) (ClientSanityState.getFalseXpProgress(minecraft.player.experienceProgress) * 183.0F), 0, 182);
 		int alpha = clamp((int) (14.0F + instability * 20.0F + flashStrength * 22.0F), 0, 72);
 		guiGraphics.fill(x, y, x + 182, y + 5, (alpha << 24) | 0x081205);
 		if (filled > 0) {
@@ -438,6 +461,14 @@ public final class SanityHudRenderer {
 		if (instability > 0.42F || flashStrength > 0.0F) {
 			guiGraphics.fill(x + 2, y - 1, x + 180, y, ((alpha / 2) << 24) | 0xB4FF92);
 		}
+	}
+
+	private static void renderFalseHotbarEmphasis(GuiGraphics guiGraphics, int centerX, int height, int slot, float instability, float flashStrength) {
+		int x = centerX - 91 + slot * 20;
+		int y = height - 23;
+		int alpha = clamp((int) (34.0F + instability * 48.0F + flashStrength * 42.0F), 24, 110);
+		guiGraphics.renderOutline(x - 2, y - 2, 24, 24, (alpha << 24) | 0x8E2D2D);
+		guiGraphics.fill(x - 1, y - 1, x + 23, y + 23, ((alpha / 3) << 24) | 0x170000);
 	}
 
 	private static void renderShadowFlicker(GuiGraphics guiGraphics, int width, int height) {

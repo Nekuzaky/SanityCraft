@@ -17,7 +17,7 @@ public final class SanityCraftMultiplayerScreen extends JoinMultiplayerScreen {
 	@Override
 	protected void init() {
 		super.init();
-		layout = SanityCraftMenuLayout.createSubmenuLayout(this.width, this.height, this.font.lineHeight);
+		layout = SanityCraftMenuLayout.createSubmenuLayout(this.width, this.height, this.font.lineHeight, false);
 		SanityCraftMenuLayout.reflowSubmenuWidgets(this, layout, widget -> false);
 		SanityCraftMenuEffects.activate(this.minecraft);
 	}
@@ -50,7 +50,6 @@ public final class SanityCraftMultiplayerScreen extends JoinMultiplayerScreen {
 				time,
 				distortion);
 		if (layout != null) {
-			SanityCraftMenuLayout.renderSubmenuHeader(guiGraphics, this.font, layout, SanityCraftMenuEffects.getSubtitle());
 			SanityCraftMenuLayout.renderFooter(guiGraphics, this.font, layout.footer());
 		}
 	}

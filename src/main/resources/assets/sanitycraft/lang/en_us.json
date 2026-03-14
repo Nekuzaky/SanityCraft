@@ -1,6 +1,8 @@
 {
   "item.sanitycraft.stalker_spawn_egg": "Stalker Spawn Egg",
   "entity.sanitycraft.stalker": "Stalker",
+  "item.sanitycraft.observer_spawn_egg": "Observer Spawn Egg",
+  "entity.sanitycraft.observer": "Observer",
   "item_group.sanitycraft.sanity_craft": "SanityCraft",
   "painting.sanitycraft.sanity_paint.author": "Nekuzaky",
   "painting.sanitycraft.sanity_paint.title": "Sanity Paint",
@@ -34,5 +36,10 @@
   "sanitycraft.menu.glitch.play.continue": "Continue",
   "sanitycraft.menu.phantom_button.continue": "Continue",
   "sanitycraft.menu.phantom_button.return": "Return",
-  "sanitycraft.menu.phantom_button.resume": "Resume"
+  "sanitycraft.menu.phantom_button.resume": "Resume",
+  "sanitycraft.memory_whisper.already_here": "You were already here.",
+  "sanitycraft.memory_whisper.heard_that_before": "You heard that before.",
+  "sanitycraft.memory_whisper.left_something_behind": "You left something behind.",
+  "sanitycraft.memory_whisper.this_path_knows_you": "This path knows you.",
+  "sanitycraft.memory_whisper.you_closed_that": "You closed that already."
 }

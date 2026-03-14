@@ -89,17 +89,23 @@ public final class SanityCraftMenuLayout {
 	}
 
 	public static SubmenuLayout createSubmenuLayout(int width, int height, int fontLineHeight) {
+		return createSubmenuLayout(width, height, fontLineHeight, true);
+	}
+
+	public static SubmenuLayout createSubmenuLayout(int width, int height, int fontLineHeight, boolean showHeader) {
 		float scale = viewportScale(width, height, 0.54F, 0.96F);
 		int sideInset = clamp(Math.round(width * 0.045F), 20, 120);
-		int headerTop = clamp(Math.round(height * 0.020F), 8, 22);
-		int subtitleGap = clamp(Math.round(6.0F * scale), 4, 9);
-		int subtitleToContentGap = clamp(Math.round(12.0F * scale), 8, 16);
-		int logoWidth = Math.min(width - sideInset * 2, clamp(Math.round(212.0F * (0.84F + scale * 0.16F)), 156, 262));
-		int logoHeight = Math.max(1, Math.round(logoWidth / LOGO_ASPECT));
-		int logoX = (width - logoWidth) / 2;
+		int headerTop = showHeader ? clamp(Math.round(height * 0.020F), 8, 22) : 0;
+		int subtitleGap = showHeader ? clamp(Math.round(6.0F * scale), 4, 9) : 0;
+		int subtitleToContentGap = showHeader ? clamp(Math.round(12.0F * scale), 8, 16) : clamp(Math.round(6.0F * scale), 4, 10);
+		int logoWidth = showHeader ? Math.min(width - sideInset * 2, clamp(Math.round(212.0F * (0.84F + scale * 0.16F)), 156, 262)) : 0;
+		int logoHeight = showHeader ? Math.max(1, Math.round(logoWidth / LOGO_ASPECT)) : 0;
+		int logoX = showHeader ? (width - logoWidth) / 2 : width / 2;
 		int subtitleY = headerTop + logoHeight + subtitleGap;
 		FooterLayout footer = createFooterLayout(width, height, fontLineHeight, scale, 0.0F);
-		int contentTop = subtitleY + fontLineHeight + subtitleToContentGap;
+		int contentTop = showHeader
+				? subtitleY + fontLineHeight + subtitleToContentGap
+				: clamp(Math.round(height * 0.085F), 60, 96);
 		int contentBottom = height - footer.reservedHeight() - clamp(Math.round(height * 0.022F), 12, 24);
 		int panelWidth = Math.min(width - sideInset * 2, clamp(Math.round(width * 0.66F), 620, 1180));
 		int contentLeft = (width - panelWidth) / 2;
@@ -197,19 +203,23 @@ public final class SanityCraftMenuLayout {
 	}
 
 	public static void renderSubmenuHeader(GuiGraphics guiGraphics, Font font, SubmenuLayout layout, Component subtitle) {
+		boolean showSubtitle = subtitle != null && !subtitle.getString().isBlank();
 		int outerPadX = clamp(Math.round(layout.logoWidth() * 0.055F), 8, 16);
 		int outerPadY = clamp(Math.round(layout.logoHeight() * 0.12F), 4, 10);
 		int innerPadX = clamp(Math.round(layout.logoWidth() * 0.020F), 4, 8);
 		int innerPadY = clamp(Math.round(layout.logoHeight() * 0.045F), 2, 6);
 		int subtitleRuleWidth = clamp(Math.round(layout.logoWidth() * 0.26F), 56, 100);
 		int subtitleRuleY = layout.subtitleY() + font.lineHeight + 4;
+		int headerBottom = showSubtitle
+				? layout.subtitleY() + font.lineHeight + outerPadY
+				: layout.logoY() + layout.logoHeight() + outerPadY;
 
 		guiGraphics.fill(0, 0, layout.screenWidth(), layout.contentTop() - layout.sectionGap() / 2, 0x0F000000);
 		guiGraphics.fill(
 				layout.logoX() - outerPadX,
 				layout.logoY() - outerPadY,
 				layout.logoX() + layout.logoWidth() + outerPadX,
-				layout.subtitleY() + font.lineHeight + outerPadY,
+				headerBottom,
 				0x54100000);
 		guiGraphics.fill(
 				layout.logoX() - innerPadX,
@@ -218,32 +228,33 @@ public final class SanityCraftMenuLayout {
 				layout.logoY() + layout.logoHeight() + innerPadY,
 				0x18000000);
 		renderLogo(guiGraphics, layout.logoX(), layout.logoY(), layout.logoWidth(), layout.logoHeight());
-		guiGraphics.drawCenteredString(font, subtitle, layout.screenWidth() / 2, layout.subtitleY(), 0xFFC49E9D);
-		guiGraphics.fill(layout.screenWidth() / 2 - subtitleRuleWidth / 2, subtitleRuleY, layout.screenWidth() / 2 + subtitleRuleWidth / 2, subtitleRuleY + 1, 0x52886A6A);
-		guiGraphics.fill(layout.screenWidth() / 2 - subtitleRuleWidth / 4, subtitleRuleY + 1, layout.screenWidth() / 2 + subtitleRuleWidth / 4, subtitleRuleY + 2, 0x28190A0A);
+		if (showSubtitle) {
+			guiGraphics.drawCenteredString(font, subtitle, layout.screenWidth() / 2, layout.subtitleY(), 0xFFC49E9D);
+			guiGraphics.fill(layout.screenWidth() / 2 - subtitleRuleWidth / 2, subtitleRuleY, layout.screenWidth() / 2 + subtitleRuleWidth / 2, subtitleRuleY + 1, 0x52886A6A);
+			guiGraphics.fill(layout.screenWidth() / 2 - subtitleRuleWidth / 4, subtitleRuleY + 1, layout.screenWidth() / 2 + subtitleRuleWidth / 4, subtitleRuleY + 2, 0x28190A0A);
+		}
 	}
 
 	public static void renderFooter(GuiGraphics guiGraphics, Font font, FooterLayout footer) {
-		Component warningLabel = Component.translatable("sanitycraft.menu.footer.warning");
 		Component versionLabel = Component.translatable("sanitycraft.menu.footer.version", SharedConstants.getCurrentVersion().name());
-		int labelWidth = Math.max(font.width(warningLabel), font.width(versionLabel));
+		int labelWidth = font.width(versionLabel);
 		int right = footer.leftX() + labelWidth + footer.backgroundPaddingX();
+		int top = footer.versionY() - footer.backgroundPaddingY();
 		int bottom = footer.versionY() + font.lineHeight + footer.backgroundPaddingY();
 
 		guiGraphics.fill(
 				footer.leftX() - footer.backgroundPaddingX(),
-				footer.warningY() - footer.backgroundPaddingY(),
+				top,
 				right,
 				bottom,
 				0x4C100505);
 		guiGraphics.fill(
 				footer.leftX() - footer.backgroundPaddingX() / 2,
-				footer.warningY() - Math.max(3, footer.backgroundPaddingY() / 2),
+				footer.versionY() - Math.max(3, footer.backgroundPaddingY() / 2),
 				right,
 				bottom,
 				0x16000000);
-		guiGraphics.fill(footer.leftX() - footer.backgroundPaddingX(), footer.warningY() - 1, right, footer.warningY(), 0x2C4A1919);
-		guiGraphics.drawString(font, warningLabel, footer.leftX(), footer.warningY(), 0x9CB18383, false);
+		guiGraphics.fill(footer.leftX() - footer.backgroundPaddingX(), top - 1, right, top, 0x2C4A1919);
 		guiGraphics.drawString(font, versionLabel, footer.leftX(), footer.versionY(), 0xA8C7B5B5, false);
 	}
 
@@ -252,10 +263,10 @@ public final class SanityCraftMenuLayout {
 		int bottomPadding = clamp(Math.round(Mth.lerp(compact, height * 0.018F, 8.0F)), 8, 28);
 		int lineGap = clamp(Math.round(Mth.lerp(compact, 3.0F + scale * 2.0F, 2.0F)), 2, 5);
 		int versionY = height - bottomPadding - fontLineHeight;
-		int warningY = versionY - fontLineHeight - lineGap;
+		int warningY = versionY;
 		int backgroundPaddingX = clamp(Math.round(Mth.lerp(compact, 8.0F * scale, 5.0F)), 4, 12);
 		int backgroundPaddingY = clamp(Math.round(Mth.lerp(compact, 6.0F * scale, 3.0F)), 3, 8);
-		int reservedHeight = bottomPadding + fontLineHeight * 2 + lineGap + backgroundPaddingY * 2;
+		int reservedHeight = bottomPadding + fontLineHeight + backgroundPaddingY * 2;
 
 		return new FooterLayout(leftX, warningY, versionY, reservedHeight, backgroundPaddingX, backgroundPaddingY);
 	}

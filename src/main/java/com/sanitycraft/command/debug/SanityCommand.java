@@ -2,6 +2,7 @@ package com.sanitycraft.command.debug;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sanitycraft.network.sync.ClientEffectSyncService;
 import com.sanitycraft.network.sync.MenuTestType;
 import com.sanitycraft.sanity.SanityAudioEvent;
@@ -10,6 +11,13 @@ import com.sanitycraft.sanity.SanityHallucinationService;
 import com.sanitycraft.sanity.SanityManager;
 import com.sanitycraft.sanity.SanityAudioDirector;
 import com.sanitycraft.sanity.SanityThresholds;
+import com.sanitycraft.sanity.events.SanityCollapseCombinationManager;
+import com.sanitycraft.sanity.events.SanityEventManager;
+import com.sanitycraft.sanity.gameplay.SanityDoppelgangerService;
+import com.sanitycraft.sanity.gameplay.SanityFalseEventService;
+import com.sanitycraft.sanity.gameplay.SanityHudDistortionService;
+import com.sanitycraft.sanity.gameplay.SanityObserverService;
+import com.sanitycraft.sanity.gameplay.SanityWorldAnomalyService;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -57,7 +65,43 @@ public final class SanityCommand {
 								.then(Commands.literal("on")
 										.executes(context -> toggleDebug(context.getSource(), context.getSource().getPlayerOrException(), true)))
 								.then(Commands.literal("off")
-										.executes(context -> toggleDebug(context.getSource(), context.getSource().getPlayerOrException(), false))))
+										.executes(context -> toggleDebug(context.getSource(), context.getSource().getPlayerOrException(), false)))
+								.then(Commands.literal("anomaly")
+										.executes(context -> debugAnomaly(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("observer")
+										.executes(context -> debugObserver(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("false_event")
+										.executes(context -> debugFalseEvent(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("event")
+										.then(Commands.argument("id", StringArgumentType.word())
+												.executes(context -> debugEvent(
+														context.getSource(),
+														context.getSource().getPlayerOrException(),
+														StringArgumentType.getString(context, "id")))))
+								.then(Commands.literal("collapse_combo")
+										.executes(context -> debugCollapseCombo(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("false_hud")
+										.executes(context -> debugFalseHud(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("false_safety")
+										.executes(context -> debugFalseSafety(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("collapse_silence")
+										.executes(context -> debugCollapseSilence(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("doppelganger")
+										.executes(context -> debugDoppelganger(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("hud")
+										.executes(context -> debugHud(context.getSource(), context.getSource().getPlayerOrException())))
+								.then(Commands.literal("silent_world")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "silent_world")))
+								.then(Commands.literal("impossible_return")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "impossible_return")))
+								.then(Commands.literal("echo_step")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "echo_step")))
+								.then(Commands.literal("wrong_sun")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "wrong_sun")))
+								.then(Commands.literal("almost_mob")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "almost_mob")))
+								.then(Commands.literal("memory_whisper")
+										.executes(context -> debugNamedEvent(context.getSource(), context.getSource().getPlayerOrException(), "memory_whisper"))))
 						.then(Commands.literal("audio_debug")
 								.then(Commands.literal("on")
 										.executes(context -> toggleAudioDebug(context.getSource(), context.getSource().getPlayerOrException(), true)))
@@ -182,6 +226,72 @@ public final class SanityCommand {
 	private static int menuTest(CommandSourceStack source, ServerPlayer target, MenuTestType testType) {
 		ClientEffectSyncService.sendMenuTest(target, testType);
 		source.sendSuccess(() -> Component.literal("Triggered menu test: " + testType.commandName()), true);
+		return 1;
+	}
+
+	private static int debugAnomaly(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityWorldAnomalyService.debugTrigger(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugObserver(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityObserverService.debugTrigger(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugFalseEvent(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityFalseEventService.debugTrigger(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugDoppelganger(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityDoppelgangerService.debugTrigger(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugEvent(CommandSourceStack source, ServerPlayer target, String eventId) {
+		String result = SanityEventManager.debugTrigger(target, eventId);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugCollapseCombo(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityCollapseCombinationManager.debugTriggerCombo(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugFalseHud(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityCollapseCombinationManager.debugTriggerFalseHud(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugFalseSafety(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityCollapseCombinationManager.debugTriggerFalseSafety(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugCollapseSilence(CommandSourceStack source, ServerPlayer target) {
+		String result = SanityCollapseCombinationManager.debugTriggerSilence(target);
+		source.sendSuccess(() -> Component.literal(result), true);
+		return 1;
+	}
+
+	private static int debugHud(CommandSourceStack source, ServerPlayer target) {
+		SanityHudDistortionService.debugTrigger(target);
+		source.sendSuccess(() -> Component.literal("Triggered hud distortion"), true);
+		return 1;
+	}
+
+	private static int debugNamedEvent(CommandSourceStack source, ServerPlayer target, String eventId) {
+		String result = SanityEventManager.debugTrigger(target, eventId);
+		source.sendSuccess(() -> Component.literal(result), true);
 		return 1;
 	}
 }

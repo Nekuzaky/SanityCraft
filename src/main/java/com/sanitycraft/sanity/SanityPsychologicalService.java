@@ -2,6 +2,7 @@ package com.sanitycraft.sanity;
 
 import com.sanitycraft.data.config.SanityCraftConfig;
 import com.sanitycraft.entity.stalker.StalkerEntity;
+import com.sanitycraft.sanity.events.SanityEventContext;
 import com.sanitycraft.registry.ModEntities;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,12 +36,30 @@ public final class SanityPsychologicalService {
 	private static final int CHEST_SOUND_COOLDOWN = 20 * 9;
 	private static final int WINDOW_WATCHER_COOLDOWN = 20 * 11;
 	private static final int FALSE_WORLD_DURATION = 20 * 3;
+	private static final int MAX_RECENT_CHANGES = 40;
+	private static final int IMPOSSIBLE_RETURN_MAX_AGE = 20 * 60 * 4;
+	private static final int IMPOSSIBLE_RETURN_MIN_AGE = 20 * 8;
+	private static final int IMPOSSIBLE_RETURN_DEPART_DISTANCE = 18;
+	private static final int IMPOSSIBLE_RETURN_REVISIT_DISTANCE = 8;
+	private static final int IMPOSSIBLE_RETURN_GROUP_RADIUS = 6;
+	private static final int IMPOSSIBLE_RETURN_REPLAY_COOLDOWN = 20 * 35;
+	private static final int PENDING_CHANGE_DELAY_TICKS = 2;
+	private static final String[] MEMORY_WHISPER_KEYS = {
+			"sanitycraft.memory_whisper.already_here",
+			"sanitycraft.memory_whisper.heard_that_before",
+			"sanitycraft.memory_whisper.left_something_behind",
+			"sanitycraft.memory_whisper.this_path_knows_you",
+			"sanitycraft.memory_whisper.you_closed_that"
+	};
+	private static final Map<UUID, List<RecentWorldChange>> RECENT_WORLD_CHANGES = new ConcurrentHashMap<>();
+	private static final Map<UUID, List<PendingWorldChange>> PENDING_WORLD_CHANGES = new ConcurrentHashMap<>();
 
 	private SanityPsychologicalService() {
 	}
 
 	public static void tickPlayer(ServerPlayer player, SanityComponent component, SanityThresholds.Stage stage, long gameTime) {
 		expireIllusions(player, gameTime);
+		tickRecentWorldChanges(player, gameTime);
 		if (stage == SanityThresholds.Stage.STABLE) {
 			clearPlayer(player);
 			return;
@@ -62,14 +81,14 @@ public final class SanityPsychologicalService {
 				maybePlayChestSounds(player, component, random, 0.042F);
 				maybeFakeBlockBehindPlayer(player, component, gameTime, random, 0.055F);
 				maybeFakeStructure(player, component, gameTime, random, 0.045F);
-				maybeTriggerFalseSafety(player, component, random, false);
+				triggerFalseSafety(player, component, random, false, false, "false_safety");
 			}
 			case COLLAPSE -> {
 				maybeSendWatchingMessage(player, component, random, 0.060F);
 				maybePlayChestSounds(player, component, random, 0.060F);
 				maybeFakeBlockBehindPlayer(player, component, gameTime, random, 0.085F);
 				maybeFakeStructure(player, component, gameTime, random, 0.070F);
-				maybeTriggerFalseSafety(player, component, random, true);
+				triggerFalseSafety(player, component, random, true, false, "false_safety");
 			}
 			default -> {
 			}
@@ -86,8 +105,66 @@ public final class SanityPsychologicalService {
 		}
 	}
 
+	public static void clearPlayerHistory(ServerPlayer player) {
+		RECENT_WORLD_CHANGES.remove(player.getUUID());
+		PENDING_WORLD_CHANGES.remove(player.getUUID());
+	}
+
 	public static void clearAll() {
 		ACTIVE_ILLUSIONS.clear();
+		RECENT_WORLD_CHANGES.clear();
+		PENDING_WORLD_CHANGES.clear();
+	}
+
+	public static boolean isPlayerInsideBase(ServerPlayer player) {
+		return isInsideBase(player);
+	}
+
+	public static boolean triggerFalseSafety(ServerPlayer player, SanityComponent component, boolean collapse, boolean forced, String source) {
+		return triggerFalseSafety(player, component, player.getRandom(), collapse, forced, source);
+	}
+
+	public static void recordBrokenBlock(ServerPlayer player, BlockPos pos, BlockState previousState, long gameTime) {
+		recordWorldChange(player, pos, previousState, Blocks.AIR.defaultBlockState(), gameTime);
+	}
+
+	public static void recordPotentialPlacement(ServerPlayer player, BlockPos pos, BlockState previousState, long gameTime) {
+		if (!player.level().hasChunkAt(pos)) {
+			return;
+		}
+		PENDING_WORLD_CHANGES.computeIfAbsent(player.getUUID(), ignored -> new ArrayList<>())
+				.add(new PendingWorldChange(pos.immutable(), previousState, gameTime + PENDING_CHANGE_DELAY_TICKS));
+	}
+
+	public static void recordDoorInteraction(ServerPlayer player, BlockPos pos, BlockState previousState, long gameTime) {
+		recordPotentialPlacement(player, pos, previousState, gameTime);
+	}
+
+	public static boolean hasImpossibleReturnCandidate(ServerPlayer player, long gameTime) {
+		return !findImpossibleReturnCluster(player, gameTime, player.getRandom()).isEmpty();
+	}
+
+	public static boolean triggerImpossibleReturn(SanityEventContext context, int durationTicks) {
+		List<RecentWorldChange> cluster = findImpossibleReturnCluster(context.player(), context.gameTime(), context.random());
+		if (cluster.isEmpty()) {
+			return false;
+		}
+
+		int duration = Math.max(20, durationTicks + context.random().nextInt(16));
+		boolean sent = false;
+		for (RecentWorldChange change : cluster) {
+			if (!context.player().level().getBlockState(change.pos()).equals(change.actualState())) {
+				continue;
+			}
+			sent |= context.sendFalseBlock(change.pos(), change.rememberedState(), duration);
+			change.markReplayed(context.gameTime());
+		}
+		return sent;
+	}
+
+	public static boolean triggerMemoryWhisper(SanityEventContext context, int durationTicks) {
+		String key = MEMORY_WHISPER_KEYS[context.random().nextInt(MEMORY_WHISPER_KEYS.length)];
+		return context.sendClientEvent("memory_whisper", context.player().blockPosition(), durationTicks, 1, context.random().nextInt(), key, "memory_whisper");
 	}
 
 	private static void maybeSendWatchingMessage(ServerPlayer player, SanityComponent component, RandomSource random, float chance) {
@@ -179,42 +256,60 @@ public final class SanityPsychologicalService {
 		}
 	}
 
-	private static void maybeTriggerFalseSafety(ServerPlayer player, SanityComponent component, RandomSource random, boolean collapse) {
-		if (!isInsideBase(player)) {
-			return;
+	private static boolean triggerFalseSafety(
+			ServerPlayer player,
+			SanityComponent component,
+			RandomSource random,
+			boolean collapse,
+			boolean forced,
+			String source) {
+		if (!forced && !isInsideBase(player)) {
+			return false;
 		}
 
-		if (component.isCooldownReady(SanityComponent.Cooldown.BREATHING)
-				&& roll(random, collapse ? 0.085F : 0.045F)
-				&& component.tryConsumeEffectBudget(SanityCraftConfig.get(), 1)) {
-			SanityAudioDirector.playFalseSafetyBreathing(player, collapse, "false_safety");
-			component.setCooldown(SanityComponent.Cooldown.BREATHING, jitter(20 * 7, random));
+		boolean triggered = false;
+		if (forced) {
+			triggered |= SanityAudioDirector.playFalseChest(player, source + "_chest");
 		}
-		if (!component.isCooldownReady(SanityComponent.Cooldown.WINDOW_WATCHER) || !roll(random, collapse ? 0.080F : 0.050F)) {
-			return;
+		if ((forced || component.isCooldownReady(SanityComponent.Cooldown.BREATHING))
+				&& (forced || roll(random, collapse ? 0.085F : 0.045F))
+				&& (forced || component.tryConsumeEffectBudget(SanityCraftConfig.get(), 1))) {
+			triggered |= SanityAudioDirector.playFalseSafetyBreathing(player, collapse, source + "_breathing");
+			if (!forced) {
+				component.setCooldown(SanityComponent.Cooldown.BREATHING, jitter(20 * 7, random));
+			}
 		}
-		if (!component.tryConsumeEffectBudget(SanityCraftConfig.get(), 2)) {
-			return;
+		if (!forced && (!component.isCooldownReady(SanityComponent.Cooldown.WINDOW_WATCHER) || !roll(random, collapse ? 0.080F : 0.050F))) {
+			return triggered;
+		}
+		if (!forced && !component.tryConsumeEffectBudget(SanityCraftConfig.get(), 2)) {
+			return triggered;
 		}
 
 		Vec3 watcherPos = findWindowWatcherPosition(player);
 		if (watcherPos != null) {
-			if (SanityHallucinationService.spawnWatcherStalker(player, watcherPos, collapse ? 20 * 8 : 20 * 6, "window_shadow")) {
-				component.setCooldown(SanityComponent.Cooldown.WINDOW_WATCHER, jitter(WINDOW_WATCHER_COOLDOWN, random));
+			if (SanityHallucinationService.spawnWatcherStalker(player, watcherPos, collapse ? 20 * 8 : 20 * 6, source + "_window")) {
+				triggered = true;
+				if (!forced) {
+					component.setCooldown(SanityComponent.Cooldown.WINDOW_WATCHER, jitter(WINDOW_WATCHER_COOLDOWN, random));
+				}
 			}
-			return;
+			return triggered;
 		}
 
 		BlockPos fallback = blockAheadOfPlayer(player, 5 + random.nextInt(3));
 		StalkerEntity stalker = ModEntities.STALKER.create(player.level(), EntitySpawnReason.EVENT);
 		if (stalker == null) {
-			return;
+			return triggered;
 		}
 		stalker.setPos(fallback.getX() + 0.5D, fallback.getY(), fallback.getZ() + 0.5D);
 		stalker.configureHallucination(player, collapse ? 20 * 8 : 20 * 6, true);
 		player.level().addFreshEntity(stalker);
-		component.setCooldown(SanityComponent.Cooldown.WINDOW_WATCHER, jitter(WINDOW_WATCHER_COOLDOWN, random));
-		SanityDebug.logHallucinationSuccess(player, "window_shadow", stalker.position(), "false_safety_fallback");
+		if (!forced) {
+			component.setCooldown(SanityComponent.Cooldown.WINDOW_WATCHER, jitter(WINDOW_WATCHER_COOLDOWN, random));
+		}
+		SanityDebug.logHallucinationSuccess(player, "window_shadow", stalker.position(), source + "_fallback");
+		return true;
 	}
 
 	private static void expireIllusions(ServerPlayer player, long gameTime) {
@@ -234,6 +329,118 @@ public final class SanityPsychologicalService {
 		if (illusions.isEmpty()) {
 			ACTIVE_ILLUSIONS.remove(player.getUUID());
 		}
+	}
+
+	private static void tickRecentWorldChanges(ServerPlayer player, long gameTime) {
+		resolvePendingWorldChanges(player, gameTime);
+
+		List<RecentWorldChange> changes = RECENT_WORLD_CHANGES.get(player.getUUID());
+		if (changes == null || changes.isEmpty()) {
+			return;
+		}
+
+		Iterator<RecentWorldChange> iterator = changes.iterator();
+		while (iterator.hasNext()) {
+			RecentWorldChange change = iterator.next();
+			if (gameTime - change.createdTick() > IMPOSSIBLE_RETURN_MAX_AGE) {
+				iterator.remove();
+				continue;
+			}
+
+			BlockState actual = player.level().getBlockState(change.pos());
+			if (!actual.equals(change.actualState())) {
+				if (actual.equals(change.rememberedState())) {
+					iterator.remove();
+					continue;
+				}
+				change.updateActualState(actual);
+			}
+
+			double distanceSq = centerOf(change.pos()).distanceToSqr(player.position());
+			if (distanceSq >= IMPOSSIBLE_RETURN_DEPART_DISTANCE * IMPOSSIBLE_RETURN_DEPART_DISTANCE) {
+				change.markDeparted();
+			}
+		}
+
+		if (changes.isEmpty()) {
+			RECENT_WORLD_CHANGES.remove(player.getUUID());
+		}
+	}
+
+	private static void resolvePendingWorldChanges(ServerPlayer player, long gameTime) {
+		List<PendingWorldChange> pendingChanges = PENDING_WORLD_CHANGES.get(player.getUUID());
+		if (pendingChanges == null || pendingChanges.isEmpty()) {
+			return;
+		}
+
+		Iterator<PendingWorldChange> iterator = pendingChanges.iterator();
+		while (iterator.hasNext()) {
+			PendingWorldChange pending = iterator.next();
+			if (gameTime < pending.resolveTick() || !player.level().hasChunkAt(pending.pos())) {
+				continue;
+			}
+
+			BlockState actual = player.level().getBlockState(pending.pos());
+			if (!actual.equals(pending.previousState())) {
+				recordWorldChange(player, pending.pos(), pending.previousState(), actual, gameTime);
+			}
+			iterator.remove();
+		}
+
+		if (pendingChanges.isEmpty()) {
+			PENDING_WORLD_CHANGES.remove(player.getUUID());
+		}
+	}
+
+	private static void recordWorldChange(ServerPlayer player, BlockPos pos, BlockState rememberedState, BlockState actualState, long gameTime) {
+		if (rememberedState.equals(actualState) || !player.level().hasChunkAt(pos)) {
+			return;
+		}
+
+		List<RecentWorldChange> changes = RECENT_WORLD_CHANGES.computeIfAbsent(player.getUUID(), ignored -> new ArrayList<>());
+		changes.removeIf(change -> change.pos().equals(pos));
+		changes.add(0, new RecentWorldChange(pos.immutable(), rememberedState, actualState, gameTime));
+		while (changes.size() > MAX_RECENT_CHANGES) {
+			changes.remove(changes.size() - 1);
+		}
+	}
+
+	private static List<RecentWorldChange> findImpossibleReturnCluster(ServerPlayer player, long gameTime, RandomSource random) {
+		List<RecentWorldChange> changes = RECENT_WORLD_CHANGES.get(player.getUUID());
+		if (changes == null || changes.isEmpty()) {
+			return List.of();
+		}
+
+		List<RecentWorldChange> eligible = new ArrayList<>();
+		double revisitDistanceSq = IMPOSSIBLE_RETURN_REVISIT_DISTANCE * IMPOSSIBLE_RETURN_REVISIT_DISTANCE;
+		for (RecentWorldChange change : changes) {
+			if (!change.departed()
+					|| gameTime - change.createdTick() < IMPOSSIBLE_RETURN_MIN_AGE
+					|| gameTime - change.lastReplayTick() < IMPOSSIBLE_RETURN_REPLAY_COOLDOWN
+					|| !player.level().getBlockState(change.pos()).equals(change.actualState())) {
+				continue;
+			}
+
+			if (centerOf(change.pos()).distanceToSqr(player.position()) <= revisitDistanceSq) {
+				eligible.add(change);
+			}
+		}
+
+		if (eligible.isEmpty()) {
+			return List.of();
+		}
+
+		RecentWorldChange anchor = eligible.get(random.nextInt(eligible.size()));
+		List<RecentWorldChange> cluster = new ArrayList<>();
+		for (RecentWorldChange change : eligible) {
+			if (change.pos().distManhattan(anchor.pos()) <= IMPOSSIBLE_RETURN_GROUP_RADIUS) {
+				cluster.add(change);
+			}
+			if (cluster.size() >= 6) {
+				break;
+			}
+		}
+		return cluster;
 	}
 
 	private static boolean sendFalseBlock(ServerPlayer player, BlockPos pos, BlockState fakeState, long expireTick) {
@@ -324,6 +531,10 @@ public final class SanityPsychologicalService {
 		return null;
 	}
 
+	private static Vec3 centerOf(BlockPos pos) {
+		return new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+	}
+
 	private static boolean roll(RandomSource random, float chance) {
 		return random.nextFloat() < chance;
 	}
@@ -334,5 +545,60 @@ public final class SanityPsychologicalService {
 	}
 
 	private record FalseWorldIllusion(BlockPos pos, long expireTick) {
+	}
+
+	private record PendingWorldChange(BlockPos pos, BlockState previousState, long resolveTick) {
+	}
+
+	private static final class RecentWorldChange {
+		private final BlockPos pos;
+		private final BlockState rememberedState;
+		private BlockState actualState;
+		private final long createdTick;
+		private boolean departed;
+		private long lastReplayTick = Long.MIN_VALUE / 4;
+
+		private RecentWorldChange(BlockPos pos, BlockState rememberedState, BlockState actualState, long createdTick) {
+			this.pos = pos;
+			this.rememberedState = rememberedState;
+			this.actualState = actualState;
+			this.createdTick = createdTick;
+		}
+
+		private BlockPos pos() {
+			return pos;
+		}
+
+		private BlockState rememberedState() {
+			return rememberedState;
+		}
+
+		private BlockState actualState() {
+			return actualState;
+		}
+
+		private long createdTick() {
+			return createdTick;
+		}
+
+		private boolean departed() {
+			return departed;
+		}
+
+		private long lastReplayTick() {
+			return lastReplayTick;
+		}
+
+		private void updateActualState(BlockState newActualState) {
+			this.actualState = newActualState;
+		}
+
+		private void markDeparted() {
+			this.departed = true;
+		}
+
+		private void markReplayed(long gameTime) {
+			this.lastReplayTick = gameTime;
+		}
 	}
 }

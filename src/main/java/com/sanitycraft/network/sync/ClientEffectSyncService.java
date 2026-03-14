@@ -1,7 +1,10 @@
 package com.sanitycraft.network.sync;
 
 import com.sanitycraft.data.config.SanityCraftConfig;
+import com.sanitycraft.network.packet.ClientboundFalseFeedbackPacket;
+import com.sanitycraft.network.packet.ClientboundHudDistortionPacket;
 import com.sanitycraft.network.packet.ClientboundMenuTestPacket;
+import com.sanitycraft.network.packet.ClientboundSanityEventPacket;
 import com.sanitycraft.network.packet.ClientboundScarePulsePacket;
 import com.sanitycraft.sanity.SanityDebug;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class ClientEffectSyncService {
@@ -24,8 +28,11 @@ public final class ClientEffectSyncService {
 			return;
 		}
 		registered = true;
+		PayloadTypeRegistry.playS2C().register(ClientboundFalseFeedbackPacket.TYPE, ClientboundFalseFeedbackPacket.CODEC);
+		PayloadTypeRegistry.playS2C().register(ClientboundHudDistortionPacket.TYPE, ClientboundHudDistortionPacket.CODEC);
 		PayloadTypeRegistry.playS2C().register(ClientboundScarePulsePacket.TYPE, ClientboundScarePulsePacket.CODEC);
 		PayloadTypeRegistry.playS2C().register(ClientboundMenuTestPacket.TYPE, ClientboundMenuTestPacket.CODEC);
+		PayloadTypeRegistry.playS2C().register(ClientboundSanityEventPacket.TYPE, ClientboundSanityEventPacket.CODEC);
 	}
 
 	public static void sendScarePulse(ServerPlayer player, int durationTicks, int intensity) {
@@ -53,6 +60,60 @@ public final class ClientEffectSyncService {
 	public static void sendMenuTest(ServerPlayer player, MenuTestType testType) {
 		ServerPlayNetworking.send(player, new ClientboundMenuTestPacket(testType.id()));
 		SanityDebug.logEvent(player, "Menu test effect=" + testType.commandName());
+	}
+
+	public static void sendFalseFeedback(ServerPlayer player, String message) {
+		if (message == null || message.isBlank()) {
+			return;
+		}
+		ServerPlayNetworking.send(player, new ClientboundFalseFeedbackPacket(message));
+		SanityDebug.logEvent(player, "False feedback message=\"" + message + "\"");
+	}
+
+	public static boolean sendSanityEvent(
+			ServerPlayer player,
+			String eventId,
+			BlockPos anchor,
+			int durationTicks,
+			int intensity,
+			int variant,
+			String text,
+			String source,
+			boolean bypassRateLimit) {
+		if (!bypassRateLimit && !tryConsumeRateLimit(player)) {
+			SanityDebug.logEvent(player, "Sanity event rate limited source=" + source + " event=" + eventId);
+			return false;
+		}
+		BlockPos safeAnchor = anchor == null ? player.blockPosition() : anchor;
+		ServerPlayNetworking.send(player, new ClientboundSanityEventPacket(
+				eventId,
+				safeAnchor.getX(),
+				safeAnchor.getY(),
+				safeAnchor.getZ(),
+				Math.max(0, durationTicks),
+				Math.max(0, intensity),
+				variant,
+				text == null ? "" : text));
+		SanityDebug.logEvent(player, "Client sanity event source=" + source
+				+ " event=" + eventId
+				+ " anchor=" + safeAnchor.toShortString()
+				+ " duration=" + Math.max(0, durationTicks)
+				+ " intensity=" + Math.max(0, intensity)
+				+ " variant=" + variant);
+		return true;
+	}
+
+	public static boolean sendHudDistortion(ServerPlayer player, int durationTicks, int intensity, boolean fakeDamageFlash, String source, boolean bypassRateLimit) {
+		if (!bypassRateLimit && !tryConsumeRateLimit(player)) {
+			SanityDebug.logEvent(player, "Hud distortion rate limited source=" + source);
+			return false;
+		}
+		ServerPlayNetworking.send(player, new ClientboundHudDistortionPacket(Math.max(1, durationTicks), Math.max(1, intensity), fakeDamageFlash));
+		SanityDebug.logEvent(player, "Hud distortion source=" + source
+				+ " duration=" + Math.max(1, durationTicks)
+				+ " intensity=" + Math.max(1, intensity)
+				+ " fake_damage=" + fakeDamageFlash);
+		return true;
 	}
 
 	private static boolean tryConsumeRateLimit(ServerPlayer player) {

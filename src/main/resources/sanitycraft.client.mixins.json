@@ -4,18 +4,24 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "sanitycraft.refmap.json",
   "client": [
+    "AbstractContainerScreenHallucinationMixin",
     "AbstractButtonSkinMixin",
+    "ClientLevelSilentWorldMixin",
     "AbstractSelectionListSkinMixin",
     "AbstractSliderButtonSkinMixin",
     "ConnectScreenMixin",
+    "EntityRenderDispatcherDistortionMixin",
     "FogRendererMixin",
     "GenericMessageScreenMixin",
     "GameRendererMixin",
+    "JoinMultiplayerTitleMixin",
     "LevelLoadingScreenMixin",
     "MinecraftWindowTitleMixin",
     "ProgressScreenMixin",
     "ReceivingLevelScreenMixin",
-    "ScreenBackgroundMixin"
+    "ScreenBackgroundMixin",
+    "SelectWorldTitleMixin",
+    "StringWidgetTitleMixin"
   ],
   "injectors": {
     "defaultRequire": 0

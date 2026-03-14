@@ -1,6 +1,7 @@
 package com.sanitycraft.client.render;
 
 import com.sanitycraft.client.render.entity.BloodyCreeperRenderer;
+import com.sanitycraft.client.render.entity.ObserverRenderer;
 import com.sanitycraft.client.render.entity.StalkerRenderer;
 import com.sanitycraft.registry.ModEntities;
 import net.fabricmc.api.EnvType;
@@ -15,5 +16,6 @@ public final class ClientEntityRenderers {
 	public static void register() {
 		EntityRendererRegistry.register(ModEntities.STALKER, StalkerRenderer::new);
 		EntityRendererRegistry.register(ModEntities.BLOODY_CREEPER, BloodyCreeperRenderer::new);
+		EntityRendererRegistry.register(ModEntities.OBSERVER, ObserverRenderer::new);
 	}
 }

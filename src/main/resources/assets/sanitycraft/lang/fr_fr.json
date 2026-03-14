@@ -1,6 +1,8 @@
 {
   "item.sanitycraft.stalker_spawn_egg": "Oeuf d'apparition du traqueur",
   "entity.sanitycraft.stalker": "Traqueur",
+  "item.sanitycraft.observer_spawn_egg": "Oeuf d'apparition de l'observer",
+  "entity.sanitycraft.observer": "Observer",
   "item_group.sanitycraft.sanity_craft": "SanityCraft",
   "painting.sanitycraft.sanity_paint.author": "Nekuzaky",
   "painting.sanitycraft.sanity_paint.title": "Tableau de la sanite",
@@ -34,5 +36,10 @@
   "sanitycraft.menu.glitch.play.continue": "Continuer",
   "sanitycraft.menu.phantom_button.continue": "Continuer",
   "sanitycraft.menu.phantom_button.return": "Retour",
-  "sanitycraft.menu.phantom_button.resume": "Reprendre"
+  "sanitycraft.menu.phantom_button.resume": "Reprendre",
+  "sanitycraft.memory_whisper.already_here": "Tu etais deja venu ici.",
+  "sanitycraft.memory_whisper.heard_that_before": "Tu as deja entendu ca.",
+  "sanitycraft.memory_whisper.left_something_behind": "Tu as laisse quelque chose derriere toi.",
+  "sanitycraft.memory_whisper.this_path_knows_you": "Ce chemin te connait.",
+  "sanitycraft.memory_whisper.you_closed_that": "Tu as deja ferme ca."
 }

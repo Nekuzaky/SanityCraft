@@ -7,6 +7,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.util.Mth;
@@ -21,6 +22,7 @@ public final class SanityCraftMenuWidgetSkin {
 		Screen screen = minecraft.screen;
 		return screen instanceof SanityCraftMultiplayerScreen
 				|| screen instanceof SanityCraftOptionsScreen
+				|| screen instanceof PauseScreen
 				|| screen instanceof SelectWorldScreen;
 	}
 
@@ -85,11 +87,25 @@ public final class SanityCraftMenuWidgetSkin {
 		if (label.contains("delete") || label.contains("supprimer")) {
 			return SanityCraftMenuButton.Accent.EXIT;
 		}
+		if (label.contains("disconnect")
+				|| label.contains("quit")
+				|| label.contains("title screen")
+				|| label.contains("menu principal")
+				|| label.contains("deconnexion")
+				|| label.contains("deconnecter")
+				|| label.contains("quitter")) {
+			return SanityCraftMenuButton.Accent.EXIT;
+		}
 		if (label.contains("select")
 				|| label.contains("join")
 				|| label.contains("play")
+				|| label.contains("resume")
+				|| label.contains("return to game")
+				|| label.contains("back to game")
 				|| label.contains("rejoindre")
 				|| label.contains("jouer")
+				|| label.contains("reprendre")
+				|| label.contains("retour au jeu")
 				|| label.contains("ajouter")
 				|| label.contains("add")
 				|| label.contains("creer")

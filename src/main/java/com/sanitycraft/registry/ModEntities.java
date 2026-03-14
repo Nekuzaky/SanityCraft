@@ -2,6 +2,7 @@ package com.sanitycraft.registry;
 
 import com.sanitycraft.SanityCraft;
 import com.sanitycraft.entity.bloodycreeper.BloodyCreeperEntity;
+import com.sanitycraft.entity.observer.ObserverEntity;
 import com.sanitycraft.entity.stalker.StalkerEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
@@ -26,6 +27,12 @@ public final class ModEntities {
 					.clientTrackingRange(64)
 					.updateInterval(3)
 					.sized(0.6F, 1.7F));
+	public static final EntityType<ObserverEntity> OBSERVER = register(
+			"observer",
+			EntityType.Builder.<ObserverEntity>of(ObserverEntity::new, MobCategory.MONSTER)
+					.clientTrackingRange(96)
+					.updateInterval(3)
+					.sized(0.6F, 2.9F));
 
 	private ModEntities() {
 	}
@@ -33,6 +40,7 @@ public final class ModEntities {
 	public static void register() {
 		FabricDefaultAttributeRegistry.register(STALKER, StalkerEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(BLOODY_CREEPER, BloodyCreeperEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(OBSERVER, ObserverEntity.createAttributes());
 	}
 
 	private static <T extends Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {
