@@ -28,6 +28,8 @@ public class PlayerSanityComponent {
 	private boolean ritualSafeZoneLastTick = false;
 	private int zeroSanityTicks = 0;
 	private int hallucinationShieldTicks = 0;
+	private boolean doomsdayActivated = false;
+	private static final int DOOMSDAY_THRESHOLD = 600; // 30 secondes
 
 	public int getSanity() {
 		return sanity;
@@ -37,6 +39,7 @@ public class PlayerSanityComponent {
 		this.sanity = Mth.clamp(sanity, MIN_SANITY, MAX_SANITY);
 		if (this.sanity > MIN_SANITY) {
 			zeroSanityTicks = 0;
+			doomsdayActivated = false;
 		}
 	}
 
@@ -49,6 +52,27 @@ public class PlayerSanityComponent {
 	public boolean shouldUpdate(int intervalTicks) {
 		updateTicker++;
 		return updateTicker % Math.max(1, intervalTicks) == 0;
+	}
+
+	public int getZeroSanityTicks() {
+		return zeroSanityTicks;
+	}
+
+	public boolean isDoomsdayActivated() {
+		return doomsdayActivated;
+	}
+
+	public void setDoomsdayActivated(boolean value) {
+		this.doomsdayActivated = value;
+	}
+
+	public void tickZeroSanity() {
+		if (sanity == MIN_SANITY) {
+			zeroSanityTicks++;
+			if (zeroSanityTicks == 1) {
+				doomsdayActivated = true;
+			}
+		}
 	}
 
 	public void tickCooldowns() {

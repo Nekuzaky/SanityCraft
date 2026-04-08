@@ -68,10 +68,22 @@ public class SanityManager {
 	}
 
 	public static void tickZeroSanityDeath(ServerPlayer player) {
+		PlayerSanityComponent component = get(player);
+		component.tickZeroSanity();
+
+		// DOOMSDAY MODE: à 0 sanité = chaos absolu + mort après 30 secondes
+		if (component.getSanity() <= 0) {
+			if (!component.isDoomsdayActivated()) {
+				ZeroSanityDoomsday.activateDoomsday(player);
+				component.setDoomsdayActivated(true);
+			}
+			ZeroSanityDoomsday.processDoomsday(player, component, component.getZeroSanityTicks());
+		}
+
+		// Ancien système de mort (fallback)
 		if (!config.zeroSanityDeathEnabled) {
 			return;
 		}
-		PlayerSanityComponent component = get(player);
 		int delayTicks = Math.max(1, config.zeroSanityDeathDelaySeconds) * 20;
 		if (component.tickZeroSanityTimer(delayTicks)) {
 			component.resetZeroSanityTimer();
