@@ -52,6 +52,16 @@ public class SanityNarrativeDirector {
 			component.resetMimicCooldown(random);
 			SanityManager.debugEvent(player, "paranoia_mimic");
 		}
+		if (config.eyeContactHallucinationEnabled && sanity <= 35 && component.canTriggerBaseEvent() && random.nextFloat() < clamp01(config.eyeContactChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
+			triggerEyeContact(player, random);
+			component.resetBaseEventCooldown(random);
+			SanityManager.debugEvent(player, "eye_contact");
+		}
+		if (config.shadowFigureEnabled && sanity <= 42 && component.canPlayMimic() && random.nextFloat() < clamp01(config.shadowFigureChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
+			triggerShadowFigure(player, random);
+			component.resetMimicCooldown(random);
+			SanityManager.debugEvent(player, "shadow_figure");
+		}
 		if (config.falseUiEventsEnabled && sanity <= 45 && component.canTriggerFalseUi() && random.nextFloat() < clamp01(config.falseUiEventChance) && component.tryConsumeHorrorEventBudget(config, random, 1)) {
 			triggerFalseUiEvent(player, random);
 			component.resetFalseUiCooldown(random);
@@ -74,13 +84,18 @@ public class SanityNarrativeDirector {
 			component.resetJumpscareCooldown(random);
 			SanityManager.debugEvent(player, "jumpscare");
 		}
+		if (sanity <= 15 && random.nextFloat() < 0.15F && component.tryConsumeHorrorEventBudget(config, random, 2)) {
+			ExtremeLowSanityEffects.triggerExtremeHorror(player, sanity, random);
+			ExtremeLowSanityEffects.spawnDreadAura(player, random);
+			SanityManager.debugEvent(player, "extreme_horror");
+		}
 	}
 
 	private static void sendNarrativeWhisper(ServerPlayer player, int sanity, RandomSource random) {
 		String[] lines = sanity <= 20
-				? new String[] {"YOUR MIND IS NOT YOURS", "IT IS INSIDE THE WALLS", "DO NOT OPEN THE INVENTORY", "IT WALKS BEHIND YOU"}
-				: sanity <= 40 ? new String[] {"someone is near", "there is no safe place", "do not stop moving", "you missed a sound behind you"}
-						: new String[] {"the cave is breathing", "you should leave now", "something watches the light", "keep your eyes forward"};
+				? new String[] {"YOUR MIND IS NOT YOURS", "IT IS INSIDE THE WALLS", "DO NOT OPEN THE INVENTORY", "IT WALKS BEHIND YOU", "TURN AROUND NOW", "YOUR SHADOW MOVED WRONG", "COUNT YOUR FINGERS", "DO NOT LOOK UP"}
+				: sanity <= 40 ? new String[] {"someone is near", "there is no safe place", "do not stop moving", "you missed a sound behind you", "the walls are closing", "nothing is real here", "trust nothing you see", "your reflection lied to you"}
+						: new String[] {"the cave is breathing", "you should leave now", "something watches the light", "keep your eyes forward", "lights flicker for a reason", "silence is deafening", "empty places are never empty", "the darkness blinks"};
 		player.displayClientMessage(Component.literal(lines[random.nextInt(lines.length)]), true);
 	}
 
@@ -221,16 +236,23 @@ public class SanityNarrativeDirector {
 
 	private static void triggerRoofFootsteps(ServerPlayer player, BlockPos roofPos, RandomSource random) {
 		ServerLevel level = player.level();
-		level.playSound(null, roofPos, SoundEvents.WARDEN_STEP, SoundSource.HOSTILE, 0.70F, 0.80F + random.nextFloat() * 0.14F);
-		ServerWorkQueue.queue(7, () -> {
+		level.playSound(null, roofPos, SoundEvents.WARDEN_STEP, SoundSource.HOSTILE, 0.85F, 0.80F + random.nextFloat() * 0.14F);
+		ServerWorkQueue.queue(5, () -> {
 			if (player.isRemoved() || !player.level().dimension().equals(level.dimension())) {
 				return;
 			}
-			level.playSound(null, roofPos.offset(random.nextIntBetweenInclusive(-1, 1), 0, random.nextIntBetweenInclusive(-1, 1)), SoundEvents.ZOMBIE_STEP, SoundSource.HOSTILE, 0.62F,
+			level.playSound(null, roofPos.offset(random.nextIntBetweenInclusive(-2, 2), 0, random.nextIntBetweenInclusive(-2, 2)), SoundEvents.ZOMBIE_STEP, SoundSource.HOSTILE, 0.82F,
 					0.74F + random.nextFloat() * 0.18F);
 		});
-		SanityNetworking.triggerScarePulse(player, 7, 2);
-		SanityJournal.log(player, "I heard footsteps above the roof.");
+		ServerWorkQueue.queue(10, () -> {
+			if (player.isRemoved() || !player.level().dimension().equals(level.dimension())) {
+				return;
+			}
+			level.playSound(null, roofPos.offset(random.nextIntBetweenInclusive(-1, 1), 0, random.nextIntBetweenInclusive(-1, 1)), SoundEvents.WARDEN_NEARBY_CLOSER, SoundSource.HOSTILE, 0.90F,
+					0.65F + random.nextFloat() * 0.2F);
+		});
+		SanityNetworking.triggerScarePulse(player, 10, 3);
+		SanityJournal.log(player, "Something dragged itself across the roof.");
 	}
 
 	private static BaseContext scanBaseContext(ServerPlayer player) {
@@ -314,6 +336,21 @@ public class SanityNarrativeDirector {
 	private static boolean isWorkstationBlock(BlockState state) {
 		return state.is(Blocks.CRAFTING_TABLE) || state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER) || state.is(Blocks.ANVIL) || state.is(Blocks.CHIPPED_ANVIL)
 				|| state.is(Blocks.DAMAGED_ANVIL) || state.is(Blocks.ENCHANTING_TABLE);
+	}
+
+	private static void triggerEyeContact(ServerPlayer player, RandomSource random) {
+		player.displayClientMessage(Component.literal("§c§lIT'S LOOKING AT YOU"), true);
+		player.playNotifySound(SoundEvents.ENDERMAN_STARE, SoundSource.HOSTILE, 0.95F, 0.4F + random.nextFloat() * 0.2F);
+		SanityNetworking.triggerScarePulse(player, 8, 2);
+		SanityJournal.log(player, "I felt something's eyes on me. It was real.");
+	}
+
+	private static void triggerShadowFigure(ServerPlayer player, RandomSource random) {
+		String[] messages = {"A shadow moved where nothing exists.", "Something tall stood in the corner.", "Dark shapes have weight here.", "The shadows are deeper now."};
+		player.displayClientMessage(Component.literal("§0" + messages[random.nextInt(messages.length)]), true);
+		player.playNotifySound(SoundEvents.ENDERMAN_AMBIENT, SoundSource.HOSTILE, 0.80F, 0.5F + random.nextFloat() * 0.15F);
+		SanityNetworking.triggerScarePulse(player, 6, 1);
+		SanityJournal.log(player, "The shadows are beginning to think.");
 	}
 
 	private static float clamp01(float value) {
